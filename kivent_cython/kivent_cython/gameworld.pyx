@@ -5,6 +5,7 @@ DictProperty, BooleanProperty, ObjectProperty)
 from kivy.clock import Clock
 from functools import partial
 
+
 class GameWorld(Widget):
     state = StringProperty('initial')
     number_entities = NumericProperty(0)

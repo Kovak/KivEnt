@@ -5,6 +5,10 @@
 #:set BUTTON_SIZE_HEIGHT (.1 * 1.61)
 #:set BUTTON_MARGIN_WIDTH (.015)
 #:set BUTTON_MARGIN_HEIGHT (.015)
+#:set COLOR_HIGHLIGHT (0.788235294, 0.643137255, 1)
+#:set COLOR_BACKGROUND (0.349019608, 0.082352941, 0.658823529)
+#:set COLOR_BACKGROUND_A50 (0.349019608, 0.082352941, 0.658823529, .5)
+#:set COLOR_BORDER (0.643137255, 0.160784314, 1)
 
 
 TestGame:
@@ -33,11 +37,10 @@ TestGame:
 	    	image_mode: 'atlas'
 	    	do_scale: True
 			gameworld: root.gameworld
-		QuadTreeQuadRenderer:
+		QuadTreePointRenderer:
 			system_id: 'quadtree_renderer'
 			render_information_from: 'position'
 			gameworld: root.gameworld
-		
 		GameSystem:
 			system_id: 'position'
 			gameworld: root.gameworld
@@ -57,6 +60,8 @@ TestGame:
 		CymunkPhysics:
 			gameworld: root.gameworld
 		PhysicsRenderer:
+			gameworld: root.gameworld
+		PhysicsPointRenderer:
 			gameworld: root.gameworld
 		ParticleManager:
 			gameworld: root.gameworld
@@ -100,6 +105,55 @@ TestGame:
 			text: 'Play Game'
 			on_press: root.gameworld.state = 'main_game'
 
+<CharacterInputPanel>:
+	canvas:
+		Color:
+			rgba: COLOR_BACKGROUND_A50
+		Rectangle: 
+			pos: self.pos
+			size: self.size
+		Color:
+			rgb: COLOR_BORDER
+		Line:
+			width: 1.
+			points: (self.pos[0] + self.size[0] *.2, self.pos[1], self.pos[0] + self.size[0] *.2, self.pos[1] + self.size[1]) 
+		Line:
+			width: 1.
+			points: (self.pos[0], self.pos[1] + self.size[1] *.2, self.pos[0] + self.size[0], self.pos[1] + self.size[1] *.2)
+		Line:
+			width: 1.
+			points: (self.pos[0] + self.size[0] *.4, self.pos[1], self.pos[0] + self.size[0] *.4, self.pos[1] + self.size[1]) 
+		Line:
+			width: 1.
+			points: (self.pos[0], self.pos[1] + self.size[1] *.4, self.pos[0] + self.size[0], self.pos[1] + self.size[1] *.4)
+		Line:
+			width: 1.
+			points: (self.pos[0] + self.size[0] *.6, self.pos[1], self.pos[0] + self.size[0] *.6, self.pos[1] + self.size[1]) 
+		Line:
+			width: 1.
+			points: (self.pos[0], self.pos[1] + self.size[1] *.6, self.pos[0] + self.size[0], self.pos[1] + self.size[1] *.6)
+		Line:
+			width: 1.
+			points: (self.pos[0] + self.size[0] *.8, self.pos[1], self.pos[0] + self.size[0] *.8, self.pos[1] + self.size[1]) 
+		Line:
+			width: 1.
+			points: (self.pos[0], self.pos[1] +  self.size[1] *.8, self.pos[0] + self.size[0], self.pos[1] + self.size[1] *.8) 
+		Color:
+			rgb: COLOR_HIGHLIGHT
+		Line:
+			width: 2.
+			points: (self.center[0], self.pos[1], self.center[0], self.pos[1] + self.size[1]) if self.current_touch == [] else (self.current_touch[0], self.pos[1], self.current_touch[0], self.pos[1] + self.size[1])
+		Line:
+			width: 2.
+			points: (self.pos[0], self.size[1] *.33, self.pos[0] + self.size[0], self.size[1] *.33) if self.current_touch == [] else (self.pos[0], self.current_touch[1], self.pos[0] + self.size[0], self.current_touch[1])
+		Color: 
+			rgb: COLOR_BORDER
+		Line:
+			width: 2.
+			rectangle: (self.pos[0], self.pos[1], self.size[0], self.size[1])
+			joint: 'bevel'
+
+
 <MainGameScreen>:
 	gameworld: self.gameworld
 	number_of_asteroids: self.number_of_asteroids
@@ -109,32 +163,35 @@ TestGame:
 		Label:
 			pos_hint: {'x': .5, 'y': .9}
 			text: str(root.number_of_asteroids) if not root.gameworld == None else '0'
+			on_text: print self._label.content_size[0]
 			size_hint: (.1, .1)
 		Button:
 			pos_hint: {'x': 1-(BUTTON_SIZE_WIDTH + BUTTON_MARGIN_WIDTH), 'y': 1-(BUTTON_SIZE_HEIGHT + BUTTON_MARGIN_HEIGHT)}
 			size_hint: (BUTTON_SIZE_WIDTH, BUTTON_SIZE_HEIGHT)
 			text: 'Main Menu'
+
 			on_press: root.gameworld.state = 'main_menu'
-		Button:
-			pos_hint: {'x': BUTTON_MARGIN_WIDTH, 'y': BUTTON_MARGIN_HEIGHT}
-			size_hint: (BUTTON_SIZE_WIDTH, BUTTON_SIZE_HEIGHT)
-			text: 'Fire Engines'
-			on_state: root.gameworld.systems['player_character'].fire_engines(self.state)
 		Button:
 			pos_hint: {'x': BUTTON_MARGIN_WIDTH, 'y': BUTTON_SIZE_HEIGHT + 2*BUTTON_MARGIN_HEIGHT}
 			size_hint: (BUTTON_SIZE_WIDTH, BUTTON_SIZE_HEIGHT)
 			text: 'Fire Weapons'
 			on_state: root.gameworld.systems['player_character'].spawn_projectile(self.state)
-		Button:
-			pos_hint: {'x': 1-(2*BUTTON_SIZE_WIDTH + 2*BUTTON_MARGIN_WIDTH), 'y': BUTTON_MARGIN_HEIGHT}
-			size_hint: (BUTTON_SIZE_WIDTH, BUTTON_SIZE_HEIGHT)
-			text: 'Turn Left'
-			on_state: root.gameworld.systems['player_character'].turn_left(self.state)
-		Button:
-			pos_hint: {'x': 1-(BUTTON_SIZE_WIDTH + BUTTON_MARGIN_WIDTH), 'y': BUTTON_MARGIN_HEIGHT}
-			size_hint: (BUTTON_SIZE_WIDTH, BUTTON_SIZE_HEIGHT)
-			text: 'Turn Right'
-			on_state: root.gameworld.systems['player_character'].turn_right(self.state)
+		CharacterInputPanel:
+			gameworld: root.gameworld
+			size_hint: (.20, .3)
+			pos_hint: {'x': .775, 'y': .025}
+
+
+		# Button:
+		# 	pos_hint: {'x': 1-(2*BUTTON_SIZE_WIDTH + 2*BUTTON_MARGIN_WIDTH), 'y': BUTTON_MARGIN_HEIGHT}
+		# 	size_hint: (BUTTON_SIZE_WIDTH, BUTTON_SIZE_HEIGHT)
+		# 	text: 'Turn Left'
+		# 	on_state: root.gameworld.systems['player_character'].turn_left(self.state)
+		# Button:
+		# 	pos_hint: {'x': 1-(BUTTON_SIZE_WIDTH + BUTTON_MARGIN_WIDTH), 'y': BUTTON_MARGIN_HEIGHT}
+		# 	size_hint: (BUTTON_SIZE_WIDTH, BUTTON_SIZE_HEIGHT)
+		# 	text: 'Turn Right'
+		# 	on_state: root.gameworld.systems['player_character'].turn_right(self.state)
 
 		DebugPanel:
 			pos: root.size[0] * .5, root.size[1] *.05

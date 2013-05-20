@@ -1,0 +1,37 @@
+<?xml version="1.0" ?>
+  <particleEmitterConfig>
+  <texture name="./assets/particles/VFX-1-Star.png"/>
+  <sourcePositionVariance x="0" y="0"/>
+  <gravity x="0" y="0"/>
+  <emitterType value="0"/>
+  <maxParticles value="6"/>
+  <particleLifeSpan value="0.21"/>
+  <particleLifespanVariance value="0"/>
+  <startParticleSize value="125"/>
+  <startParticleSizeVariance value="24"/>
+  <finishParticleSize value="55"/>
+  <FinishParticleSizeVariance value="0"/>
+  <angle value="12.9999999851"/>
+  <angleVariance value="0"/>
+  <rotationStart value="0"/>
+  <rotationStartVariance value="2864.78897565"/>
+  <rotationEnd value="0"/>
+  <rotationEndVariance value="0"/>
+  <speed value="5"/>
+  <speedVariance value="30"/>
+  <radialAcceleration value="0"/>
+  <radialAccelVariance value="0"/>
+  <tangentialAcceleration value="0"/>
+  <tangentialAccelVariance value="0"/>
+  <maxRadius value="150"/>
+  <maxRadiusVariance value="0"/>
+  <minRadius value="15"/>
+  <rotatePerSecond value="-12.0"/>
+  <rotatePerSecondVariance value="100"/>
+  <startColor alpha="1" blue="1" green="0.300000011921" red="0.387500017881"/>
+  <startColorVariance alpha="0" blue="0" green="0" red="0"/>
+  <finishColor alpha="1" blue="1" green="0.100000023842" red="0.212500020862"/>
+  <finishColorVariance alpha="0" blue="0" green="0" red="0"/>
+  <blendFuncSource value="770"/>
+  <blendFuncDestination value="1"/>
+  </particleEmitterConfig>

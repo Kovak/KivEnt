@@ -7,6 +7,7 @@ import math
 
 
 
+
 class GameSystem(Widget):
     system_id = StringProperty('default_id')
     updateable = BooleanProperty(False)
@@ -119,17 +120,18 @@ class GameView(GameSystem):
             self.camera_pos[0] += dist_x
             self.camera_pos[1] += dist_y
 
-    def force_camera_update(self):
+    def forced_camera_update(self):
         systems = self.gameworld.systems
         for system in systems:
             if systems[system].renderable and systems[system].active:
                 systems[system].update(None)
 
+
     def on_camera_pos(self, instance, value):
         if self.force_camera_update:
+            print 'here in camera', self.force_camera_update
             if not self.has_camera_updated:
-                print 'camera updating'
-                self.force_camera_update()
+                self.forced_camera_update()
                 self.has_camera_updated = True
             else:
                 self.has_camera_updated = False
