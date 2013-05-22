@@ -422,6 +422,10 @@ class QuadTreeQuadRenderer(QuadRenderer):
         super(QuadTreeQuadRenderer, self).__init__(**kwargs)
         Clock.schedule_once(self.setup_quadtree)
 
+    def remove_entity(self, int entity_id):
+        self.remove_entities_from_quadtree([entity_id])
+        super(QuadTreeQuadRenderer, self).remove_entity(entity_id)
+
     def create_component(self, entity_id, entity_component_dict):
         super(QuadTreeQuadRenderer, self).create_component(entity_id, entity_component_dict)
         self.quadtree.add_items([entity_id], 7)
@@ -432,6 +436,10 @@ class QuadTreeQuadRenderer(QuadRenderer):
 
     def draw_entity(self, entity_id):
         super(QuadTreeQuadRenderer, self).draw_entity(entity_id)
+
+    def remove_entities_from_quadtree(self, entity_id_list):
+        print entity_id_list
+        self.quadtree.remove_items(entity_id_list, 7)
         
 
     def update_render_state(self):
@@ -463,12 +471,16 @@ class QuadTreeQuadRenderer(QuadRenderer):
 class QuadTreePointRenderer(PointRenderer):
     system_id = StringProperty('quadtree_point_renderer')
     render_information_from = StringProperty('position')
-    quadtree = ObjectProperty(None)
+    quadtree = ObjectProperty(None, allownone=True)
     quadtree_size = ListProperty((2000., 2000.))
 
     def __init__(self, **kwargs):
         super(QuadTreePointRenderer, self).__init__(**kwargs)
         Clock.schedule_once(self.setup_quadtree)
+
+    def remove_entity(self, int entity_id):
+        print 'removing entity,', entity_id
+        super(QuadTreePointRenderer, self).remove_entity(entity_id)
 
     def create_component(self, entity_id, entity_component_dict):
         super(QuadTreePointRenderer, self).create_component(entity_id, entity_component_dict)
@@ -477,6 +489,12 @@ class QuadTreePointRenderer(PointRenderer):
     def setup_quadtree(self, dt):
         self.quadtree = QuadTree(self.gameworld, self.render_information_from, self.system_id, 
             self.entity_ids, depth=7, bounding_rect=(0, 0, self.quadtree_size[0], self.quadtree_size[1]))
+        print 'quadtree setup', self.quadtree
+
+    def enter_delete_mode(self):
+        self.paused = True
+        self.quadtree = None
+        
 
     def update_render_state(self):
         cdef object parent = self.gameworld
@@ -497,9 +515,15 @@ class QuadTreePointRenderer(PointRenderer):
                 self.remove_entity_from_canvas(entity_id)
 
     def query_on_screen(self):
-        cdef object viewport = self.gameworld.systems[self.viewport]
-        camera_pos = viewport.camera_pos
-        size = viewport.size
-        cdef list bb_list = [-camera_pos[0] + size[0], -camera_pos[0],  -camera_pos[1] + size[1], -camera_pos[1]]
-        cdef set current_on_screen = self.quadtree.bb_hit(bb_list[0], bb_list[1], bb_list[2], bb_list[3])
-        return current_on_screen
+        cdef object viewport
+        cdef list bb_list
+        cdef set current_on_screen
+        if not self.quadtree == None:
+            viewport = self.gameworld.systems[self.viewport]
+            camera_pos = viewport.camera_pos
+            size = viewport.size
+            bb_list = [-camera_pos[0] + size[0], -camera_pos[0],  -camera_pos[1] + size[1], -camera_pos[1]]
+            current_on_screen = self.quadtree.bb_hit(bb_list[0], bb_list[1], bb_list[2], bb_list[3])
+            return current_on_screen
+        else:
+            return set([])

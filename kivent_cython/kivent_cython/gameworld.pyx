@@ -88,17 +88,16 @@ class GameWorld(Widget):
         cdef dict systems = self.systems
         cdef str data
         cdef str component
-        for data in entity:
-            if data == 'id':
-                pass
-            elif data == 'entity_load_order':
-                components_to_delete.append(data)
-            else:
-                components_to_delete.append(data)
-                systems[data].remove_entity(entity_id)
-        for component in components_to_delete:
-            del entity[component]
-        Clock.schedule_once(partial(self.add_entity_to_deactivated, entity_id), 1.0)
+        if 'entity_load_order' in entity:
+            entity['entity_load_order'].reverse()
+            
+            for data_system in entity['entity_load_order']:    
+                components_to_delete.append(data_system)
+                systems[data_system].remove_entity(entity_id)
+            components_to_delete.append('entity_load_order')
+            for component in components_to_delete:
+                del entity[component]
+            Clock.schedule_once(partial(self.add_entity_to_deactivated, entity_id), 1.0)
 
     def add_entity_to_deactivated(self, int entity_id, dt):
         self.deactivated_entities.append(entity_id)

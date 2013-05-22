@@ -9,6 +9,8 @@
 #:set COLOR_BACKGROUND (0.349019608, 0.082352941, 0.658823529)
 #:set COLOR_BACKGROUND_A50 (0.349019608, 0.082352941, 0.658823529, .5)
 #:set COLOR_BORDER (0.643137255, 0.160784314, 1)
+#:set COLOR_BORDER_A50 (0.643137255, 0.160784314, 1, 1)
+#:set COLOR_HIGHLIGHT_A50 (0.788235294, 0.643137255, 1, .5)
 
 
 TestGame:
@@ -17,6 +19,8 @@ TestGame:
 	gameworld: gameworld
 	pos: root.pos
 	size: root.size
+	state: gameworld.state
+	number_of_asteroids: gameworld.number_of_asteroids
 	player_character: player_character
 	GameWorld:
 		id: gameworld
@@ -44,7 +48,7 @@ TestGame:
 		GameSystem:
 			system_id: 'position'
 			gameworld: root.gameworld
-		GameSystem:
+		ProjectileSystem:
 			system_id: 'projectile_system'
 			gameworld: root.gameworld
 		PlayerCharacter:
@@ -55,8 +59,6 @@ TestGame:
 		AsteroidSystem:
 			id: asteroid_system
 			gameworld: root.gameworld
-		QuadRenderer:
-			gameworld: root.gameworld
 		CymunkPhysics:
 			gameworld: root.gameworld
 		PhysicsRenderer:
@@ -64,6 +66,8 @@ TestGame:
 		PhysicsPointRenderer:
 			gameworld: root.gameworld
 		ParticleManager:
+			gameworld: root.gameworld
+		AsteroidsLevel:
 			gameworld: root.gameworld
 		GameScreenManager:
 			id: gamescreenmanager
@@ -93,17 +97,17 @@ TestGame:
 	MainGameScreen:
 		gameworld: root.gameworld
 		number_of_asteroids: root.number_of_asteroids
+	ChooseCharacterScreen:
+		gameworld: root.gameworld
 
 <MainMenuScreen>:
 	BoxLayout:
-		size: root.size
-		pos: root.pos
+		size_hint: (.5, .5)
+		pos_hint: {'x':.25, 'y':.25}
 		orientation: 'vertical'
-		Label:
-			text: 'Main Menu'
-		Button:
-			text: 'Play Game'
-			on_press: root.gameworld.state = 'main_game'
+		YACSButton:
+			text: 'PLAY GAME'
+			on_press: root.gameworld.state = 'choose_character'
 
 <CharacterInputPanel>:
 	canvas:
@@ -154,49 +158,151 @@ TestGame:
 			joint: 'bevel'
 
 
+<YACSLabel>:
+	font_name: 'assets/fonts/Aldrich-Regular.ttf'
+	shorten: True
+	font_size: 16
+	canvas.before:
+		Color:
+			rgba: COLOR_BACKGROUND_A50
+		Rectangle:
+			size: root.size
+			pos: root.pos
+		Color: 
+			rgb: COLOR_BORDER
+		Line:
+			width: 2.
+			rectangle: (self.pos[0], self.pos[1], self.size[0], self.size[1])
+			joint: 'bevel'
+
+<YACSButtonCircle>:
+	background_normal: 'assets/empty_pixel.png'
+	background_down: 'assets/empty_pixel.png'
+	font_name: 'assets/fonts/Aldrich-Regular.ttf'
+	color: COLOR_BORDER if self.state == 'normal' else COLOR_HIGHLIGHT
+	canvas.before:
+		Color:
+			rgba: COLOR_BACKGROUND_A50 if self.state == 'normal' else COLOR_HIGHLIGHT_A50
+		Ellipse:
+			size: root.size
+			pos: root.pos
+		Color: 
+			rgb: COLOR_BORDER
+		Line:
+			width: 2.
+			ellipse: (self.pos[0], self.pos[1], self.size[0], self.size[1])
+			joint: 'bevel'
+			close: True
+
+<YACSButton>:
+	background_normal: 'assets/empty_pixel.png'
+	background_down: 'assets/empty_pixel.png'
+	font_name: 'assets/fonts/Aldrich-Regular.ttf'
+	color: COLOR_BORDER if self.state == 'normal' else COLOR_HIGHLIGHT
+	canvas.before:
+		Color:
+			rgba: COLOR_BACKGROUND_A50
+		Rectangle:
+			size: root.size
+			pos: root.pos
+		Color: 
+			rgb: COLOR_BORDER
+		Line:
+			width: 2.
+			rectangle: (self.pos[0], self.pos[1], self.size[0], self.size[1])
+			joint: 'bevel'
+
+
 <MainGameScreen>:
 	gameworld: self.gameworld
 	number_of_asteroids: self.number_of_asteroids
 	FloatLayout:
 		size: root.size
 		pos: root.pos
-		Label:
-			pos_hint: {'x': .5, 'y': .9}
-			text: str(root.number_of_asteroids) if not root.gameworld == None else '0'
-			on_text: print self._label.content_size[0]
-			size_hint: (.1, .1)
-		Button:
-			pos_hint: {'x': 1-(BUTTON_SIZE_WIDTH + BUTTON_MARGIN_WIDTH), 'y': 1-(BUTTON_SIZE_HEIGHT + BUTTON_MARGIN_HEIGHT)}
-			size_hint: (BUTTON_SIZE_WIDTH, BUTTON_SIZE_HEIGHT)
-			text: 'Main Menu'
-
-			on_press: root.gameworld.state = 'main_menu'
-		Button:
-			pos_hint: {'x': BUTTON_MARGIN_WIDTH, 'y': BUTTON_SIZE_HEIGHT + 2*BUTTON_MARGIN_HEIGHT}
-			size_hint: (BUTTON_SIZE_WIDTH, BUTTON_SIZE_HEIGHT)
-			text: 'Fire Weapons'
+		YACSLabel:
+			pos_hint: {'x': .4, 'y': .05}
+			text: 'ASTEROIDS: ' + str(root.number_of_asteroids) if not root.gameworld == None else '0'
+			size_hint: (.2, .05)
+			font_size: self.size[1]*.5
+		YACSButtonCircle:
+			pos_hint: {'x': .05, 'y': .05}
+			size_hint: (None, None)
+			size: (.15*root.width, .15*root.width)
+			text: 'FIRE'
+			font_size: 16
 			on_state: root.gameworld.systems['player_character'].spawn_projectile(self.state)
 		CharacterInputPanel:
 			gameworld: root.gameworld
 			size_hint: (.20, .3)
 			pos_hint: {'x': .775, 'y': .025}
-
-
-		# Button:
-		# 	pos_hint: {'x': 1-(2*BUTTON_SIZE_WIDTH + 2*BUTTON_MARGIN_WIDTH), 'y': BUTTON_MARGIN_HEIGHT}
-		# 	size_hint: (BUTTON_SIZE_WIDTH, BUTTON_SIZE_HEIGHT)
-		# 	text: 'Turn Left'
-		# 	on_state: root.gameworld.systems['player_character'].turn_left(self.state)
-		# Button:
-		# 	pos_hint: {'x': 1-(BUTTON_SIZE_WIDTH + BUTTON_MARGIN_WIDTH), 'y': BUTTON_MARGIN_HEIGHT}
-		# 	size_hint: (BUTTON_SIZE_WIDTH, BUTTON_SIZE_HEIGHT)
-		# 	text: 'Turn Right'
-		# 	on_state: root.gameworld.systems['player_character'].turn_right(self.state)
-
 		DebugPanel:
-			pos: root.size[0] * .5, root.size[1] *.05
+			pos: root.size[0] * .5, 0
 			size: (25, 25)
 			size_hint: (None, None)
+
+<ChooseCharacterScreen>:
+	gameworld: self.gameworld
+	choose_character: choose_character
+	current_ship: choose_character.current_ship
+	FloatLayout:
+		pos: root.pos
+		size: root.size
+		YACSLabel:
+			pos_hint: {'x': .3, 'y':.85}
+			size_hint: (.4, .1)
+			text: 'Choose Your Ship:'
+		ChooseCharacterWidget:
+			id: choose_character
+			pos_hint: {'x': .2, 'y':.2}
+			size_hint: (.6, .6)
+			center: root.center
+			size: root.size[0]*.6, root.size[1]*.6
+		YACSButton:
+			pos_hint: {'x': .3, 'y': .05}
+			size_hint: (.4, .1)
+			text: 'Play Game'
+			on_press: root.gameworld.parent.start_round(root.current_ship)
+
+<ChooseCharacterWidget>:
+	current_ship: 'ship_1'
+	pos: root.pos
+	size: root.size
+	canvas:
+		Color:
+			rgb: COLOR_BACKGROUND
+		Rectangle:
+			pos: self.pos
+			size: self.size
+		Color:
+			rgb: COLOR_BORDER
+		Line:
+			rectangle: (self.pos[0], self.pos[1], self.size[0], self.size[1])
+			width: 2.
+	BoxLayout: 
+		size: root.size
+		pos: root.pos
+		orientation: 'vertical'
+		YACSLabel:
+			text: 'Current Ship: ' + root.current_ship
+			size_hint: (.8, .2)
+			pos_hint: {'x': .1, 'y': .8}
+		Image:
+			size_hint: (None, None)
+			pos_hint: {'x': .4}
+			source: 'assets/ships/ship1-1.png' if root.current_ship == 'ship_1' else 'assets/ships/ship3.png'
+		YACSButton:
+			text: 'Choose Ship 1'
+			size_hint: (.6, .2)
+			on_press: root.current_ship = 'ship_1'
+			pos_hint: {'x': .2, 'y': .5}
+		YACSButton:
+			text: 'Choose Ship 2'
+			on_press: root.current_ship = 'ship_2'
+			size_hint: (.6, .2)
+			pos_hint: {'x': .2, 'y': .15}
+
+	
+	
 
 
 
