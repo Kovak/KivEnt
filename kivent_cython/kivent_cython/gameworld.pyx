@@ -9,7 +9,6 @@ from functools import partial
 class GameWorld(Widget):
     state = StringProperty('initial')
     number_entities = NumericProperty(0)
-    
     gamescreenmanager = ObjectProperty(None)
     currentmap = ObjectProperty(None, allownone = True)
     
@@ -26,6 +25,9 @@ class GameWorld(Widget):
         self.deactivated_entities = []
         self.entities_to_remove = []
         self.systems = {}
+        self.l_update_group_1 = []
+        self.l_update_group_2 = []
+        self.l_update_group_3 = []
         #Clock.schedule_once(self.init_world)
         
     def init_world(self, dt):
@@ -103,6 +105,34 @@ class GameWorld(Widget):
     def add_entity_to_deactivated(self, int entity_id, dt):
         self.deactivated_entities.append(entity_id)
 
+    def update_group_1(self, dt):
+        cdef dict systems = self.systems
+        cdef object system
+        cdef list update_group = self.l_update_group_1
+        for system_name in update_group:
+            system = systems[system_name]
+            if system.updateable and not system.paused:
+                system.update(dt)
+
+    def update_group_2(self, dt):
+        cdef dict systems = self.systems
+        cdef object system
+        cdef list update_group = self.l_update_group_2
+        for system_name in update_group:
+            system = systems[system_name]
+            if system.updateable and not system.paused:
+                system.update(dt)
+        Clock.schedule_once(self.remove_entities)
+
+    def update_group_3(self, dt):
+        cdef dict systems = self.systems
+        cdef object system
+        cdef list update_group = self.l_update_group_3
+        for system_name in update_group:
+            system = systems[system_name]
+            if system.updateable and not system.paused:
+                system.update(dt)
+
     def update(self, dt):
         cdef dict systems = self.systems
         cdef object system
@@ -113,7 +143,8 @@ class GameWorld(Widget):
         Clock.schedule_once(self.remove_entities)
 
     def remove_entities(self, dt):
-        for entity_id in self.entities_to_remove:
+        entities_to_remove = [entity_id for entity_id in self.entities_to_remove]
+        for entity_id in entities_to_remove:
             self.remove_entity(entity_id)
             self.entities_to_remove.remove(entity_id)
 

@@ -38,7 +38,6 @@ class GameSystem(Widget):
         self.entity_ids.append(entity_id)
 
     def generate_entity_component_dict(self, int entity_id):
-        #This is the save function
         cdef dict entity = self.gameworld.entities[entity_id]
         return entity[self.system_id]
 

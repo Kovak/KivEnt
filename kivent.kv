@@ -1,6 +1,5 @@
 #:kivy 1.6.0
 #:import SlideTransition kivy.uix.screenmanager.SlideTransition 
-#:import radians math.radians
 #:set COLOR_HIGHLIGHT (0.788235294, 0.643137255, 1)
 #:set COLOR_BACKGROUND (0.349019608, 0.082352941, 0.658823529)
 #:set COLOR_BACKGROUND_A50 (0.349019608, 0.082352941, 0.658823529, .5)
@@ -110,10 +109,16 @@ TestGame:
 	    	do_color: True
 		ParticleManager:
 			gameworld: root.gameworld
+			size: root.size
+			max_number_particles: 30
+			pos: root.pos
 		ParticleManager:
 			system_id: 'point_particle_manager'
 			gameworld: root.gameworld
+			max_number_particles: 20
 			render_information_from: 'physics_point_renderer'
+			size: root.size
+			pos: root.pos
 		AsteroidsLevel:
 			id: asteroid_level
 			gameworld: root.gameworld

@@ -6,7 +6,6 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.togglebutton import ToggleButton
 from kivent_cython import (GameScreenManager, GameScreen)
-from particlesystem import ParticleSystem
 from kivy.clock import Clock
 
 class YACSLabel(Label):
@@ -33,10 +32,24 @@ class CharacterInputPanel(Widget):
     particle_system = ObjectProperty(None)
     def __init__(self, **kwargs):
         super(CharacterInputPanel, self).__init__(**kwargs)
-        self.create_touch_event_effect()
+        Clock.schedule_once(self.create_touch_event_effect)
 
-    def create_touch_event_effect(self):
-        self.particle_system = ParticleSystem(self.touch_effect)
+    def create_touch_event_effect(self, dt):
+        if self.gameworld.systems == {}:
+            Clock.schedule_once(self.create_touch_event_effect)
+        else:
+            particle_system = {'particle_file': self.touch_effect, 'offset': 0, 'ignore_camera': True}
+            particle_systems = {'effect1': particle_system}
+            create_dict = {'particle_manager': particle_systems}
+            component_order = ['particle_manager']
+            entity_id = self.gameworld.init_entity(create_dict, component_order)
+            self.particle_system = entity_id
+            self.gameworld.entities[entity_id]['cymunk-physics'] = {
+                'position': (self.size[0]/2. - 100, self.size[1]/2.), 
+                'angle': 0.}
+            self.gameworld.entities[entity_id]['physics_renderer'] = {'on_screen': True}
+
+ 
 
     def determine_touch_values(self, touch_x, touch_y):
         x_value = (touch_x - self.pos[0])/self.size[0]
@@ -44,11 +57,14 @@ class CharacterInputPanel(Widget):
         return (x_value, y_value)
 
     def on_current_touch(self, instance, value):
-        player_character = self.gameworld.systems['player_character']
+        gameworld = self.gameworld
+        player_character = gameworld.systems['player_character']
         if not value == []: 
             touch_values = self.determine_touch_values(value[0], value[1])
-            particle_system = self.particle_system
-            particle_system.pos = value
+            particle_system_id = self.particle_system
+            particle_system_entity = gameworld.entities[particle_system_id]
+            particle_system = particle_system_entity['particle_manager']['effect1']['particle_system']
+            particle_system_entity['cymunk-physics']['position'] = value
             particle_system.start_color = [touch_values[1], .3, .0, 1.]
             particle_system.end_color = [touch_values[1], .0, .5, 1.]
             player_character.touch_values = touch_values
@@ -59,10 +75,9 @@ class CharacterInputPanel(Widget):
     def on_touch_down(self, touch):
         if self.collide_point(touch.x, touch.y):
             self.current_touch = (touch.x, touch.y)
-            particle_system = self.particle_system
-            particle_system.start()
-            if particle_system not in self.children:
-                self.add_widget(particle_system)
+            particle_system_id = self.particle_system
+            particle_system_entity = self.gameworld.entities[particle_system_id]
+            particle_system_entity['particle_manager']['effect1']['particle_system_on'] = True
     
     def on_touch_move(self, touch):
         if self.collide_point(touch.x, touch.y):
@@ -72,10 +87,9 @@ class CharacterInputPanel(Widget):
     def on_touch_up(self, touch):
         if self.collide_point(touch.x, touch.y):
             self.current_touch = []
-            particle_system = self.particle_system
-            particle_system.stop()
-            if particle_system in self.children:
-                self.remove_widget(particle_system)
+            particle_system_id = self.particle_system
+            particle_system_entity = self.gameworld.entities[particle_system_id]
+            particle_system_entity['particle_manager']['effect1']['particle_system_on'] = False
 
 
 class DebugPanel(Widget):

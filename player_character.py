@@ -60,7 +60,6 @@ class ShipAISystem(GameSystem):
         return v
 
     def calculate_desired_angle_delta(self, target_vector, unit_vector):
-        unit_vector = (unit_vector['x'], unit_vector['y'])
         desired_angle_delta = Vector(unit_vector).angle((target_vector[0], 
             target_vector[1]))
         return desired_angle_delta
@@ -83,7 +82,7 @@ class ShipAISystem(GameSystem):
         return desired_angle_change
 
     def query_view(self, position, unit_vector, site_distance):
-        unit_vector = Vector(unit_vector['x'], unit_vector['y'])
+        unit_vector = Vector(unit_vector)
         physics_system = self.gameworld.systems['cymunk-physics']
         vec_start = Vector(position) + unit_vector
         vec_end = Vector(position) + unit_vector*site_distance
@@ -382,10 +381,10 @@ class ShipSystem(GameSystem):
             system_data = character[self.system_id]
             if system_data['fire_engines'] and 'unit_vector' in physics_data:   
                 unit_vector = physics_data['unit_vector']
-                offset = {'x': system_data['offset_distance'] * -unit_vector['x'], 
-                'y': system_data['offset_distance'] * -unit_vector['y']}
-                force = {'x': system_data['engine_speed_multiplier'] * system_data['accel']*dt * unit_vector['x'], 
-                'y': system_data['engine_speed_multiplier'] * system_data['accel']*dt * unit_vector['y']}
+                offset = (system_data['offset_distance'] * -unit_vector[0], 
+                system_data['offset_distance'] * -unit_vector[1])
+                force = (system_data['engine_speed_multiplier'] * system_data['accel']*dt * unit_vector[0], 
+                system_data['engine_speed_multiplier'] * system_data['accel']*dt * unit_vector[1])
                 physics_body.apply_impulse(force, offset)
             if physics_body.is_sleeping:
                 physics_body.activate()
@@ -410,7 +409,7 @@ class ShipSystem(GameSystem):
         if entity_id == player_character_system.current_character_id:
             player_character_system.current_health = system_data['health']
 
-    def collision_begin_ship_probe(self, arbiter, space):
+    def collision_begin_ship_probe(self, space, arbiter):
         gameworld = self.gameworld
         systems = gameworld.systems
         entities = gameworld.entities
@@ -428,7 +427,7 @@ class ShipSystem(GameSystem):
         else:
             return True
 
-    def collision_begin_ship_asteroid(self, arbiter, space):
+    def collision_begin_ship_asteroid(self, space, arbiter):
         gameworld = self.gameworld
         systems = gameworld.systems
         entities = gameworld.entities
@@ -596,8 +595,8 @@ class ProbeSystem(GameSystem):
             system_data = entity['probe_system']
             physics_data = entity['cymunk-physics']
             unit_vector = physics_data['unit_vector']
-            system_data['position'] = (physics_data['position'][0] - unit_vector['x']*system_data['offset'],
-                physics_data['position'][1] - unit_vector['y']*system_data['offset'])
+            system_data['position'] = (physics_data['position'][0] - unit_vector[0]*system_data['offset'],
+                physics_data['position'][1] - unit_vector[1]*system_data['offset'])
 
             color = system_data['color']
             if color[3] >= 1.0:

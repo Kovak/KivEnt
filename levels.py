@@ -316,7 +316,7 @@ class AsteroidSystem(GameSystem):
         system_data = entity[system_id]
         system_data['health'] -= damage
 
-    def collision_begin_asteroid_asteroid(self, arbiter, space):
+    def collision_begin_asteroid_asteroid(self, space, arbiter):
         gameworld = self.gameworld
         entities = gameworld.entities
         asteroid1_id = arbiter.shapes[0].body.data

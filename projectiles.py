@@ -103,8 +103,8 @@ class ProjectileSystem(GameSystem):
         physics_data = bullet['cymunk-physics']
         unit_vector = physics_data['unit_vector']
         bullet_accel = bullet['projectile_system']['accel']
-        force = {'x': bullet_accel*unit_vector['x'], 'y': bullet_accel*unit_vector['y']}
-        force_offset = {'x': -unit_vector['x'], 'y': -unit_vector['y']}
+        force = bullet_accel*unit_vector[0], bullet_accel*unit_vector[1]
+        force_offset = -unit_vector[0], -unit_vector[1]
         bullet['cymunk-physics']['body'].apply_impulse(force, force_offset)
         if 'point_particle_manager' in bullet:
             bullet['cymunk-physics']['body'].apply_force(force, force_offset)
@@ -115,7 +115,7 @@ class ProjectileSystem(GameSystem):
         for entity_id in self.entity_ids:
             Clock.schedule_once(partial(self.gameworld.timed_remove_entity, entity_id))
 
-    def collision_solve_asteroid_bullet(self, arbiter, space):
+    def collision_solve_asteroid_bullet(self, space, arbiter):
         gameworld = self.gameworld
         systems = gameworld.systems
         entities = gameworld.entities
@@ -134,7 +134,7 @@ class ProjectileSystem(GameSystem):
         else:
             return False
 
-    def collision_solve_bullet_bullet(self, arbiter, space):
+    def collision_solve_bullet_bullet(self, space, arbiter):
         bullet_id2 = arbiter.shapes[1].body.data
         bullet_id1 = arbiter.shapes[0].body.data
         gameworld = self.gameworld
@@ -153,7 +153,7 @@ class ProjectileSystem(GameSystem):
                 bullet2['projectile_system']['armed'] = False
                 Clock.schedule_once(partial(gameworld.timed_remove_entity, bullet_id2))
 
-    def collision_begin_ship_bullet(self, arbiter, space):
+    def collision_begin_ship_bullet(self, space, arbiter):
         gameworld = self.gameworld
         systems = gameworld.systems
         entities = gameworld.entities
@@ -169,7 +169,7 @@ class ProjectileSystem(GameSystem):
         else:
             return False
 
-    def collision_begin_bullet_bullet(self, arbiter, space):
+    def collision_begin_bullet_bullet(self, space, arbiter):
         gameworld = self.gameworld
         entities = gameworld.entities
         bullet_id2 = arbiter.shapes[1].body.data
@@ -184,7 +184,7 @@ class ProjectileSystem(GameSystem):
         else:
             return False
 
-    def collision_begin_asteroid_bullet(self, arbiter, space):
+    def collision_begin_asteroid_bullet(self, space, arbiter):
         gameworld = self.gameworld
         entities = gameworld.entities
         bullet_id = arbiter.shapes[1].body.data
@@ -198,7 +198,7 @@ class ProjectileSystem(GameSystem):
         else:
             return False
 
-    def collision_solve_ship_bullet(self, arbiter, space):
+    def collision_solve_ship_bullet(self, space, arbiter):
         gameworld = self.gameworld
         systems = gameworld.systems
         entities = gameworld.entities

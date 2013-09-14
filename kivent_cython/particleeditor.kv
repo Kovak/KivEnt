@@ -1,0 +1,120 @@
+#:kivy 1.6.0
+#:import SlideTransition kivy.uix.screenmanager.SlideTransition 
+#:set COLOR_HIGHLIGHT (0.788235294, 0.643137255, 1)
+#:set COLOR_BACKGROUND (0.349019608, 0.082352941, 0.658823529)
+#:set COLOR_BACKGROUND_A50 (0.349019608, 0.082352941, 0.658823529, .5)
+#:set COLOR_BORDER (0.643137255, 0.160784314, 1)
+#:set COLOR_BORDER_A50 (0.643137255, 0.160784314, 1, .5)
+#:set COLOR_BORDER_A75 (0.643137255, 0.160784314, 1, .75)
+#:set COLOR_HIGHLIGHT_A50 (0.788235294, 0.643137255, 1, .5)
+#:set COLOR_HIGHLIGHT_A100 (0.788235294, 0.643137255, 1, 1.0)
+#:set COLOR_BACKGROUND_A100 (0.349019608, 0.082352941, 0.658823529, 1.0)
+#:set COLOR_BORDER_A100 (0.643137255, 0.160784314, 1, 1.0)
+
+ParticleEditor:
+
+<ParticleEditor>:
+	gameworld: gameworld
+	pos: root.pos
+	size: root.size
+	GameWorld:
+		id: gameworld
+		gamescreenmanager: gamescreenmanager
+		GameView:
+			gameworld: root.gameworld
+			pos: root.pos
+			size: root.size
+		GameMap:
+			system_id: 'gamemap'
+			gameworld: root.gameworld
+			map_size: root.size
+			on_map_size: print args[1]
+		Effects:
+			gameworld: root.gameworld
+		ParticleManager:
+			gameworld: root.gameworld
+			size: root.size
+			pos: root.pos
+			position_data_from: 'effects'
+			max_number_particles: 100
+    		render_information_from: 'effects'
+    		blend_factor_source: gamescreenmanager.current_src
+    		blend_factor_dest: gamescreenmanager.current_dest
+    	
+		GameScreenManager:
+			id: gamescreenmanager
+			size: root.size
+			pos: root.pos
+			current_src: self.current_src
+			current_dest: self.current_dest
+			gameworld: root.gameworld
+			transition: SlideTransition()
+
+<GameScreenManager>:
+	current_src: editor_screen.current_src
+	current_dest: editor_screen.current_dest
+	EditorScreen:
+		id: editor_screen
+		current_src: self.current_src
+		current_dest: self.current_dest
+		
+
+<EditorScreen@Screen>:
+	name: 'main'
+	current_src: blend_func_chooser.current_src
+	current_dest: blend_func_chooser.current_dest
+	FloatLayout:
+		BoxLayout:
+			size_hint: (.2, .8)
+			orientation: 'vertical'
+			Label:
+				text: 'edit screen'
+			DebugPanel:
+			BlendFuncChooser:
+				id: blend_func_chooser
+
+
+
+<DebugPanel>:
+    Label:
+        pos: root.pos
+        size: root.size
+        halign: 'center'
+        valign: 'middle'
+        color: (1,1,1,1)
+        text: 'FPS: ' + root.fps if root.fps != None else 'FPS:'
+
+
+<BlendFuncChooser>:
+    blend_button: blend_button
+    orientation: 'vertical' 
+    Label:
+        text: 'Blend Function'
+        size_hint: (.9, .4)
+        font_size: root.size[0]*.03
+        halign: 'left'
+    Button:
+        id: blend_button
+        text: 'Source -> Dest'
+        font_size: root.size[0]*.03
+        size_hint: (.9, .6)
+        on_press: root.open_popup()
+
+
+<BlendFuncChoices>:
+    choices_box: choices_box
+    src_choices_box: src_choices_box
+    dest_choices_box: dest_choices_box
+    background_color: (0, 0, 0, 0)
+    pos_hint: {'x': .5, 'y': .2}
+    size_hint: (.5, .6)
+    BoxLayout:
+        id: choices_box
+        orientation: 'horizontal'
+        BoxLayout:
+            id: src_choices_box
+            orientation: 'vertical'
+        BoxLayout
+            id: dest_choices_box
+            orientation: 'vertical'
+
