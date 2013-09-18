@@ -43,20 +43,10 @@ class TestGame(Widget):
 
     def on_state(self, instance, value):
         if value == 'choose_character':
-            self.gameworld.systems['quadtree_renderer'].enter_delete_mode()
             self.gameworld.systems['asteroids_level'].clear_level()
             self.clear_gameworld_objects()
             self.cleared = False
             Clock.schedule_once(self.check_clear)
-
-    def check_quadtree_created(self, dt):
-        systems = self.gameworld.systems
-        quadtree_renderer = systems['quadtree_renderer']
-        if quadtree_renderer.quadtree:
-            Clock.schedule_once(self.setup_new_level)
-            self.cleared = True
-        else:
-            Clock.schedule_once(self.check_quadtree_created)
             
     def check_clear(self, dt):
         systems = self.gameworld.systems
@@ -72,14 +62,11 @@ class TestGame(Widget):
                 self.clear_gameworld_objects()
             Clock.schedule_once(self.check_clear, .01)
         else:
-            Clock.schedule_once(self.setup_new_quadtree)
-            Clock.schedule_once(self.check_quadtree_created)
+            self.cleared = True
+            self.setup_new_level()
                 
-    def setup_new_quadtree(self, dt):
-        Clock.schedule_once(
-            self.gameworld.systems['quadtree_renderer'].setup_quadtree)
 
-    def setup_new_level(self, dt):
+    def setup_new_level(self):
         Clock.schedule_once(
             self.gameworld.systems['asteroids_level'].generate_new_level)
         
@@ -215,10 +202,6 @@ class TestGame(Widget):
             separate_func=projectile_system.collision_solve_bullet_bullet)
         physics.add_collision_handler(2, 4, 
             begin_func=ship_system.collision_begin_ship_probe)
-
-    
-    def test_remove_entity(self, dt):
-        self.gameworld.remove_entity(0)
 
     def set_choose_character_state(self, dt):
         self.gameworld.state = 'choose_character'

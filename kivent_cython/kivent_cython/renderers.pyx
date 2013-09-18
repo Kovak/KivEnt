@@ -441,6 +441,7 @@ class QuadTreeQuadRenderer(QuadRenderer):
         Clock.schedule_once(self.setup_quadtree)
 
     def remove_entity(self, int entity_id):
+        self.quadtree.remove_item(entity_id)
         super(QuadTreeQuadRenderer, self).remove_entity(entity_id)
 
     def create_component(self, entity_id, entity_component_dict):
@@ -494,7 +495,7 @@ class QuadTreePointRenderer(PointRenderer):
         Clock.schedule_once(self.setup_quadtree)
 
     def remove_entity(self, int entity_id):
-        print 'removing entity,', entity_id
+        self.quadtree.remove_item(entity_id)
         super(QuadTreePointRenderer, self).remove_entity(entity_id)
 
     def create_component(self, entity_id, entity_component_dict):
@@ -504,11 +505,6 @@ class QuadTreePointRenderer(PointRenderer):
     def setup_quadtree(self, dt):
         self.quadtree = QuadTree(self.gameworld, self.render_information_from, self.system_id, 
             self.entity_ids, depth=7, bounding_rect=(0, 0, self.quadtree_size[0], self.quadtree_size[1]))
-        print 'quadtree setup', self.quadtree
-
-    def enter_delete_mode(self):
-        self.paused = True
-        self.quadtree = None
         
     def update_render_state(self):
         cdef object parent = self.gameworld
@@ -535,12 +531,11 @@ class QuadTreePointRenderer(PointRenderer):
         cdef object viewport
         cdef list bb_list
         cdef set current_on_screen
-        if not self.quadtree == None:
-            viewport = self.gameworld.systems[self.viewport]
-            camera_pos = viewport.camera_pos
-            size = viewport.size
-            bb_list = [-camera_pos[0] + size[0], -camera_pos[0],  -camera_pos[1] + size[1], -camera_pos[1]]
-            current_on_screen = self.quadtree.bb_hit(bb_list[0], bb_list[1], bb_list[2], bb_list[3])
-            return current_on_screen
-        else:
-            return set([])
+
+        viewport = self.gameworld.systems[self.viewport]
+        camera_pos = viewport.camera_pos
+        size = viewport.size
+        bb_list = [-camera_pos[0] + size[0], -camera_pos[0],  -camera_pos[1] + size[1], -camera_pos[1]]
+        current_on_screen = self.quadtree.bb_hit(bb_list[0], bb_list[1], bb_list[2], bb_list[3])
+        return current_on_screen
+

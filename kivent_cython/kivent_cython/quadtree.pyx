@@ -72,6 +72,48 @@ cdef class QuadTree(object):
         self.se = QuadTree(gameworld, position_system, size_system, se_items, depth, (center_x, center_y, r, b))
         self.sw = QuadTree(gameworld, position_system, size_system, sw_items, depth, (l, center_y, center_x, b))
 
+    def print_trees(self):
+        print 'tree: ', self.depth, self.items
+        trees = [self.nw, self.ne, self.se, self.sw]
+        for tree in trees:
+            if tree:
+                tree.print_trees()
+
+    def remove_item(self, int item):
+        cdef object position_system = self.position_system
+        cdef object size_system = self.size_system
+        cdef list entities = self.gameworld.entities
+        cdef float center_x = self.center_x
+        cdef float center_y = self.center_y
+        cdef QuadTree nw = self.nw
+        cdef QuadTree sw = self.sw
+        cdef QuadTree ne = self.ne
+        cdef QuadTree se = self.se
+        cdef dict entity = entities[item]
+        cdef tuple pos = entity[position_system]['position']
+        cdef tuple size = entity[size_system]['size']
+        cdef float item_left = pos[0] - size[0]
+        cdef float item_top = pos[1] + size[1]
+        cdef float item_right = pos[0] + size[0]
+        cdef float item_bottom = pos[1] - size[1]
+
+        if item in self.items:
+            print 'removing item', item, 'from', self.depth
+            self.items.remove(item)
+
+        if nw and item_left <= center_x and item_top >= center_y:
+            nw.remove_item(item)
+        if sw and item_left <= center_x and item_bottom <= center_y:
+            sw.remove_item(item)
+        if ne and item_right >= center_x and item_top >= center_y:
+            ne.remove_item(item)
+        if se and item_right >= center_x and item_bottom <= center_y:
+            se.remove_item(item)
+
+    def remove_items(self, list list_of_items):
+        for item in list_of_items:
+            self.remove_item(item)
+
     def add_items(self, list list_of_items, int depth):
         depth -= 1
         if depth == 0:
@@ -131,7 +173,6 @@ cdef class QuadTree(object):
         items_to_add = self.check_items()
         self.add_items(items_to_add, self.depth)
 
-
     def check_items(self):
         cdef QuadTree sw = self.sw
         cdef QuadTree nw = self.nw
@@ -176,7 +217,6 @@ cdef class QuadTree(object):
         cdef object position_system = self.position_system
         cdef object size_system = self.size_system
         cdef list entities = self.gameworld.entities
-
 
         def overlaps(int entity_id):
             cdef dict entity = entities[entity_id]
