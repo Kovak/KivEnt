@@ -11,6 +11,7 @@ class TestGame(Widget):
     def __init__(self, **kwargs):
         super(TestGame, self).__init__(**kwargs)
         Clock.schedule_once(self.init_game)
+        self.asteroids = []
 
     def init_game(self, dt):
         self.setup_map()
@@ -39,20 +40,35 @@ class TestGame(Widget):
             'velocity': (x_vel, y_vel), 
             'position': pos, 'angle': angle, 
             'angular_velocity': angular_velocity, 
-            'vel_limit': 250, 
+            'vel_limit': 1250, 
             'ang_vel_limit': radians(200), 
-            'mass': 50, 'col_shapes': col_shapes}
+            'mass': 10, 'col_shapes': col_shapes}
         create_component_dict = {'physics': physics_component, 
             'physics_renderer': {'texture': 'asteroid1', 'size': (64 , 64)}, 
             'position': pos, 'rotate': 0}
         component_order = ['position', 'rotate', 
             'physics', 'physics_renderer']
-        return self.gameworld.init_entity(create_component_dict, component_order)
+        asteroidID = self.gameworld.init_entity(create_component_dict, component_order)
+        self.asteroids.append(asteroidID)
+        return asteroidID
 
     def setup_map(self):
         gameworld = self.gameworld
         gameworld.currentmap = gameworld.systems['map']
 
+    def on_touch_move(self, touch):
+        pos = (touch.x, touch.y)
+        self.create_asteroid(pos)
+        for aid in self.asteroids:
+          asteroid = self.gameworld.entities[aid]
+          apos = asteroid.position
+          dvecx = (touch.x-apos.x)*asteroid.physics.body.mass*0.1
+          dvecy = (touch.y-apos.y)*asteroid.physics.body.mass*0.1
+          asteroid.physics.body.apply_impulse((dvecx,dvecy))
+        print "There are: %i Asteroids" % len(self.asteroids)
+    def on_touch_down(self, touch):
+        pos = (touch.x, touch.y)
+        self.create_asteroid(pos)
     def update(self, dt):
         self.gameworld.update(dt)
 
