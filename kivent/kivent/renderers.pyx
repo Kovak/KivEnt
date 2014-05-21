@@ -407,6 +407,12 @@ class Renderer(GameSystem):
             texture, size[0], size[1])
         return new_component
 
+class RotateRenderer(Renderer):
+    '''RotRenderer just enables rotation for Renderer
+
+    '''
+    system_id = StringProperty('rot_renderer')
+    do_rotate = BooleanProperty(True)
 
 class DynamicRenderer(Renderer):
     '''DynamicRenderer is designed to work with the cymunk_physics system,
