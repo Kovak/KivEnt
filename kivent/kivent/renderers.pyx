@@ -175,7 +175,7 @@ class StaticVertMeshRenderer(GameSystem):
             cmesh = CMesh(fmt=self.vertex_format,
                 mode='triangles')
         if vert_comp._do_texture:
-            cmesh.source = vert_comp._texture
+            cmesh.source = vert_comp._tex_name
         cmesh._vertices = vert_mesh._gl_verts
         cmesh._indices = vert_mesh._gl_indices
         cmesh.vcount = vert_mesh.vert_count * vert_mesh._real_count
