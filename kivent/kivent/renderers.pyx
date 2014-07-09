@@ -36,6 +36,10 @@ cdef class VertMeshComponent:
         if offset is not None:
             vertm.offset_mesh(offset)
 
+    property texture:
+        def __get__(self):
+            return self._texture
+
     property texture_name:
         def __get__(self):
             return self._tex_name
