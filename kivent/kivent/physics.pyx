@@ -163,7 +163,8 @@ class CymunkPhysics(GameSystem):
         information for performance'''
         cdef object viewport = self.gameworld.systems[self.viewport]
         camera_pos = viewport.camera_pos
-        size = viewport.size
+        camera_scale = viewport.camera_scale
+        size = (viewport.size[0]*camera_scale, viewport.size[1]*camera_scale)
         cdef list bb_list = [-camera_pos[0], -camera_pos[1], 
             -camera_pos[0] + size[0], -camera_pos[1] + size[1]]
         current_on_screen = self.query_bb(bb_list)
