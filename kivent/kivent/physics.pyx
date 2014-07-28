@@ -1,7 +1,7 @@
 from kivy.properties import (StringProperty, ListProperty, ObjectProperty, 
 BooleanProperty, NumericProperty)
 import cymunk
-from cymunk import Poly
+from cymunk import Poly, Segment
 from cymunk cimport Space, BB, Body, Shape, Circle, BoxShape, Vec2d
 from libc.math cimport M_PI_2
 
@@ -230,26 +230,35 @@ class CymunkPhysics(GameSystem):
 
         '''
         cdef dict shape = entity_component_dict['col_shapes'][0]
+        cdef list cshapes = entity_component_dict['col_shapes']
         cdef float moment
         cdef Body body
         cdef Space space
         cdef list shapes
         cdef Shape new_shape
         space = self.space
-
-        if shape['shape_type'] == 'circle':
-            moment = cymunk.moment_for_circle(
-                shape['shape_info']['mass'], 
-                shape['shape_info']['inner_radius'], 
-                shape['shape_info']['outer_radius'], 
-                shape['shape_info']['offset'])
-        elif shape['shape_type'] == 'box':
-            moment = cymunk.moment_for_box(
-                shape['shape_info']['mass'], 
-                shape['shape_info']['width'], 
-                shape['shape_info']['height'])
-        else:
-            print 'error: shape ', shape['shape_type'], 'not supported'
+        moment = 0
+        for a_shape in cshapes:
+            shape_info = a_shape['shape_info']
+            if a_shape['shape_type'] == 'circle':
+                moment += cymunk.moment_for_circle(
+                    shape_info['mass'], 
+                    shape_info['inner_radius'], 
+                    shape_info['outer_radius'], 
+                    shape_info['offset'])
+            elif a_shape['shape_type'] == 'box':
+                moment += cymunk.moment_for_box(
+                    shape_info['mass'], 
+                    shape_info['width'], 
+                    shape_info['height'])
+            elif a_shape['shape_type'] == 'poly':
+                moment += cymunk.moment_for_poly(
+                    shape_info['mass'], 
+                    shape_info['vertices'], 
+                    shape_info['offset'])
+                    
+            else:
+                print 'error: shape ', a_shape['shape_type'], 'not supported'
         if entity_component_dict['mass'] == 0:
             body = Body(None, None)
         else:
@@ -273,16 +282,18 @@ class CymunkPhysics(GameSystem):
             shape_info = shape['shape_info']
             if shape['shape_type'] == 'circle':
                 new_shape = Circle(body, shape_info['outer_radius']) 
-                new_shape.friction = shape['friction']
             elif shape['shape_type'] == 'box':
                 new_shape = BoxShape(
                     body, shape_info['width'], shape_info['height'])
-                new_shape.friction = shape['friction']
             elif shape['shape_type'] == 'poly':
                 new_shape = Poly(body, shape_info['vertices'], 
                     offset=shape_info['offset'])
+            elif shape['shape_type'] == 'segment':
+                new_shape = Segment(body, shape_info['a'], 
+                    shape_info['b'], shape_info['radius'])
             else:
                 print 'shape not created'
+            new_shape.friction = shape['friction']
             new_shape.elasticity = shape['elasticity']
             new_shape.collision_type = shape['collision_type']
             shapes.append(new_shape)
