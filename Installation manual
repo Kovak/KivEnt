@@ -1,8 +1,10 @@
 Welcome to the world of Kivent:
 
-Created by Andrew Franks.
-
-Installation manual contributers: Kovac, dessant(IRC name), inclement(IRC name), kived(IRC name), tshirtman(IRC name)
+This is a instalation giude for those that want to install kivent on ubuntu machines.
+It was created with the aim of making a clear step by step giude based on the feedback
+of tyg art. Also this was created to provide a working soloution to installing kivent
+without error on Ubuntu. The installation manual was tested on a 13.10 distribution of
+ubuntu sucessfuly.  
 
 To install this 2d game engine for kivy You will need the following:
 
@@ -90,4 +92,10 @@ python setup.py build_ext --inplace -f
 
 Did this work for you? Please provide feedback in the kivent issues page if is there are any prolems
 or if you want to share your opinions on the manual!
+
+Created by Andrew Franks.
+
+Installation manual contributers: Kovac, dessant(IRC name), inclement(IRC name), kived(IRC name), tshirtman(IRC name)
+
+
 
