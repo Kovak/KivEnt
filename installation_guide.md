@@ -9,13 +9,14 @@ pip
 
 Cython >= 0.20 
 
-Kivy (master branch. To install kivy please go to http://kivy.org/docs/installation/installation-linux.html and follow the installation instuctions)
+Kivy (Master branch. To install kivy please go to http://kivy.org/docs/installation/installation-linux.html and follow the installation instuctions)
 
 Cymunk (for physics and collision detection)
 
-Installation:
 
-```
+Installation:
+===
+
 To install Cymunk, do the following:
 ```
 git clone https://github.com/tito/cymunk.git
