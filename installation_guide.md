@@ -8,7 +8,7 @@ Before we begin, you will need the following:
 
 Cython >= 0.20 
 
-Kivy (Master branch. To install kivy please go to http://kivy.org/docs/installation/installation-linux.html and follow the installation instuctions)
+Kivy (Master branch.)
 
 Cymunk (for physics and collision detection)
 
