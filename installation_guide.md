@@ -24,15 +24,19 @@ make
 ```
 Before installing KivEnt, you will need to add some python paths.
 
-To do this, you will fristly need to run file manager as root (sudo nautilus), then you will need to show hidden files (view options, show hidden files or ctrl+H) and look for a file named ```.bashhrc``` in the home directory.
+To do this, you will fristly need to run file manager as root (sudo nautilus), 
+then you will need to show hidden files (view options, show hidden files or ctrl+H) 
+and look for a file named ```.bashhrc``` in the home directory.
 
-Open ```.bashhrc``` with your favourite text editor and add these paths (replace ```<user>``` with your own Ubuntu username):
+Open ```.bashhrc``` with your favourite text editor and add these paths 
+(replace ```<user>``` with your own Ubuntu username):
 ```
 export PYTHONPATH="/home/<user>/kivy":$PYTHONPATH
 export PYTHONPATH="/home/<user>/cymunk":$PYTHONPATH
 export PYTHONPATH="/home/<user>/cymunk/cymunk/python":$PYTHONPATH
 ```
-NOTE: Make sure that you restart the terminal after editing the file, otherwise the changes will not take effect.
+NOTE: Make sure that you restart the terminal after editing the file, 
+otherwise the changes will not take effect.
 
 
 To install KivEnt, do the following:
