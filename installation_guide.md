@@ -9,34 +9,12 @@ pip
 
 Cython >= 0.20 
 
-Kivy (master branch)
+Kivy (master branch. To install kivy please go to http://kivy.org/docs/installation/installation-linux.html and follow the installation instuctions)
 
 Cymunk (for physics and collision detection)
 
 Installation:
 
-To install Kivy do the following (make sure the dependencies are done first):
-
-Kivy dependencies:
-```
-pip install --ugrade cython
-sudo apt-get install python-sphinx
-sudo pip install sphinx
-sudo pip install blockdiag
-sudo pip install sphinxcontrib-blockdiag
-sudo pip install seqdiag
-sudo pip install sphinxcontrib-seqdiag
-sudo pip install actdiag
-sudo pip install sphinxcontrib-actdiag
-sudo pip install nwdiag
-sudo pip install sphinxcontrib-nwdiag
-```
-
-After installing the dependencies, you can proceed with installing Kivy:
-```
-git clone https://github.com/kivy/kivy.git
-cd kivy
-make
 ```
 To install Cymunk, do the following:
 ```
