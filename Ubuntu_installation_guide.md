@@ -53,7 +53,7 @@ make
 ```
 Before installing KivEnt, you will need to add some python paths.
 
-To do this, you will fristly need to run file manager as root (sudo nautilus), 
+To do this, you will fristly need to run file manager as root (```sudo nautilus```), 
 then you will need to show hidden files (view options, show hidden files or ctrl+H) 
 and look for a file named ```.bashhrc``` in the home directory.
 
