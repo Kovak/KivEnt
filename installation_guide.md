@@ -5,7 +5,6 @@ This is an installation guide for setting up KivEnt on Ubuntu 13.10.
 
 Before we begin, you will need the following:
 
-pip
 
 Cython >= 0.20 
 
@@ -16,6 +15,35 @@ Cymunk (for physics and collision detection)
 
 Installation:
 ===
+
+To install Kivy you must first install the dependences:
+```
+sudo apt-get install pkg-config python-setuptools python-pygame python-opengl \
+  python-gst0.10 python-enchant gstreamer0.10-plugins-good python-dev \
+  build-essential libgl1-mesa-dev libgles2-mesa-dev cython
+```
+Then update Cython ether:
+
+with Pip:
+```
+sudo apt-get install python-pip
+sudo pip install --upgrade cython
+```
+
+or without pip:
+```
+sudo add-apt-repository ppa:cython-dev/master-ppa
+sudo apt-get update
+sudo apt-get install cython
+```
+
+And then install kivy itself:
+```
+sudo add-apt-repository ppa:kivy-team/kivy
+sudo apt-get update
+sudo apt-get install python-kivy
+```
+
 
 To install Cymunk, do the following:
 ```
