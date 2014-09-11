@@ -179,7 +179,7 @@ class TestGame(Widget):
         Clock.schedule_interval(self.update, 1./60.)
 
     def update(self, dt):
-        self.gameworld.update(dt)
+        self.gameworld.update(int(dt))
 
     def setup_collision_callbacks(self):
         systems = self.gameworld.systems

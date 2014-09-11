@@ -557,7 +557,8 @@ class ShipSystem(GameSystem):
             'mass': ship_dict['mass']}
         view_dict = {'vertices': [(0., 0.), (0.0, ship_dict['width']), 
             (800.0, ship_dict['width']), (800.0, 0.0)],
-            'offset': (ship_dict['height']/2., -ship_dict['width']/2.)}
+            'offset': (ship_dict['height']/2., -ship_dict['width']/2.),
+            'mass': ship_dict['mass']}
         col_shape_dict = {'shape_type': 'box', 'elasticity': .5, 
             'collision_type': 2, 'shape_info': box_dict, 'friction': 1.0}
         view_shape_dict = {'shape_type': 'poly', 'elasticity': 0.0, 

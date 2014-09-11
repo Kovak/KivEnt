@@ -381,6 +381,7 @@ class GameView(GameSystem):
     system_id = StringProperty('default_gameview')
     do_scroll_lock = BooleanProperty(True)
     camera_pos = ListProperty((0, 0))
+    camera_scale = NumericProperty(1.0)
     focus_entity = BooleanProperty(False)
     do_scroll = BooleanProperty(True)
     entity_to_focus = NumericProperty(None, allownone=True)

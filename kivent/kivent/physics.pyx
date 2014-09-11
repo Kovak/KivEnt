@@ -1,7 +1,7 @@
 from kivy.properties import (StringProperty, ListProperty, ObjectProperty, 
 BooleanProperty, NumericProperty)
 import cymunk
-from cymunk import Poly
+from cymunk import Poly, Segment
 from cymunk cimport Space, BB, Body, Shape, Circle, BoxShape, Vec2d
 from libc.math cimport M_PI_2
 
@@ -163,7 +163,8 @@ class CymunkPhysics(GameSystem):
         information for performance'''
         cdef object viewport = self.gameworld.systems[self.viewport]
         camera_pos = viewport.camera_pos
-        size = viewport.size
+        camera_scale = viewport.camera_scale
+        size = (viewport.size[0]*camera_scale, viewport.size[1]*camera_scale)
         cdef list bb_list = [-camera_pos[0], -camera_pos[1], 
             -camera_pos[0] + size[0], -camera_pos[1] + size[1]]
         current_on_screen = self.query_bb(bb_list)
@@ -256,6 +257,11 @@ class CymunkPhysics(GameSystem):
                     shape_info['mass'], 
                     shape_info['vertices'], 
                     shape_info['offset'])
+            elif a_shape['shape_type'] == 'segment':
+                moment += cymunk.moment_for_segment(
+                    shape_info['mass'], 
+                    shape_info['a'], 
+                    shape_info['b'])
                     
             else:
                 print 'error: shape ', a_shape['shape_type'], 'not supported'
@@ -281,18 +287,22 @@ class CymunkPhysics(GameSystem):
         for shape in entity_component_dict['col_shapes']:
             shape_info = shape['shape_info']
             if shape['shape_type'] == 'circle':
-                new_shape = Circle(body, shape_info['outer_radius']) 
+                new_shape = Circle(body, shape_info['outer_radius'], shape_info['offset']) 
             elif shape['shape_type'] == 'box':
                 new_shape = BoxShape(
                     body, shape_info['width'], shape_info['height'])
             elif shape['shape_type'] == 'poly':
                 new_shape = Poly(body, shape_info['vertices'], 
                     offset=shape_info['offset'])
+            elif shape['shape_type'] == 'segment':
+                new_shape = Segment(body, shape_info['a'], 
+                    shape_info['b'], shape_info['radius'])
             else:
                 print 'shape not created'
             new_shape.friction = shape['friction']
             new_shape.elasticity = shape['elasticity']
             new_shape.collision_type = shape['collision_type']
+            if 'group' in shape: new_shape.group = shape['group']
             shapes.append(new_shape)
             space.add(new_shape)
             space.reindex_shape(new_shape)

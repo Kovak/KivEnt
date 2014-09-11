@@ -209,6 +209,8 @@ class GameWorld(Widget):
 
         This function immediately removes an entity from the gameworld.
         '''
+        if entity_id in self.deactivated_entities:
+            return
         cdef object entity = self.entities[entity_id]
         cdef list components_to_delete = []
         cdef dict systems = self.systems
@@ -260,11 +262,12 @@ class GameWorld(Widget):
         needs a better architecture in the future as this info should be 
         contained inside GameView instead'''
         camera_pos = viewport.camera_pos
+        camera_scale = viewport.camera_scale
         camera_size = viewport.size
         #print camera_pos, camera_size
         proj = self.matrix.view_clip(
-            -camera_pos[0], camera_size[0] + -camera_pos[0], 
-            -camera_pos[1], camera_size[1] + -camera_pos[1], 0., 100, 0)
+            -camera_pos[0], camera_size[0]*camera_scale + -camera_pos[0], 
+            -camera_pos[1], camera_size[1]*camera_scale + -camera_pos[1], 0., 100, 0)
         self.canvas['projection_mat'] = proj
 
     def remove_entities(self, dt):
