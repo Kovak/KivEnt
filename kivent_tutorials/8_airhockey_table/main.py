@@ -10,6 +10,7 @@ from math import radians, pi, sin, cos, sqrt
 import kivent_core
 import kivent_cymunk
 import cymunk as cy
+import particles as simps
 
 from kivent_core.renderers import texture_manager, VertMesh
 texture_manager.load_image('assets/png/lingrad.png')
@@ -18,6 +19,7 @@ texture_manager.load_image('assets/png/kivy-logo.png')
 texture_manager.load_image('assets/png/paddle.png')
 texture_manager.load_image('assets/png/airhole.png')
 texture_manager.load_image('assets/png/bubbles.png')
+texture_manager.load_image('assets/png/particle.png')
 from kivent_cymunk.physics import CymunkPhysics
 from functools import partial
 
@@ -30,6 +32,7 @@ faded_air_hole_alpha=.075
 class TestGame(Widget):
     def __init__(self, **kwargs):
         super(TestGame, self).__init__(**kwargs)
+        simps.gameref = self
         self.current_menu_ref = None
         self.bottom_action_name = "speedup"
         self.top_action_name = "speedup"
@@ -95,6 +98,10 @@ class TestGame(Widget):
         el'''
         if xspos<0.4 or xspos>0.6:#general player area
             super(TestGame, self).on_touch_down(touch)
+            if 'touched_ent_id' in touch.ud:
+                ent = self.gameworld.entities[touch.ud['touched_ent_id']]
+                color=ent.color
+                simps.spawn_particles_at(wp,20,8,lifespan=.5,drag=1.05,color=(color.r,.5,color.b,.9))
         else:#middle area,for observers
             if yspos<0.5:
                 do_super = self.bottom_action_name in ['wall', 'vortex']
@@ -115,6 +122,9 @@ class TestGame(Widget):
             tbody = touched_shape.body
             if tbody.data in self.puckIDs:
                 sounds.play_pitchraise(.5)
+                ent = self.gameworld.entities[tbody.data]
+                color=ent.color
+                simps.spawn_particles_at(wp,20,8,lifespan=.5,drag=1.05,color=(color.r,.5,color.b,.9))
                 tbodyvel = tbody.velocity
                 tbodyspeed = sqrt(tbodyvel.x**2.+tbodyvel.y**2.)
                 multi=2.
@@ -122,8 +132,10 @@ class TestGame(Widget):
                     multi=5.
                 elif tbodyspeed<200.:
                     multi=3.
+                xrand = random()*2.-1.
+                yrand = random()*2.-1.
                 #print "multi=", multi, " tshape=",touched_shape
-                tbody.velocity=(tbodyvel.x*multi,tbodyvel.y*multi)
+                tbody.velocity=(tbodyvel.x*multi+xrand,tbodyvel.y*multi+yrand)
                 if yspos<0.5:
                     self.bottom_points+=tbodyspeed
                 else:
@@ -327,6 +339,10 @@ class TestGame(Widget):
         lerp_system = systems['lerp_system']
         lerp_system.add_lerp_to_entity(ent2_id, 'color', 'r', 1., .3,
             'float', callback=self.lerp_callback_goal_score)
+        pp = arbiter.shapes[0].body.position
+        ent = self.gameworld.entities[ent1_id]
+        color = ent.color
+        simps.spawn_particles_at((pp[0],pp[1]), count=10,maxvel=5.,color=(color.r,.5,color.b,.9))
 
         return False
 
@@ -348,10 +364,13 @@ class TestGame(Widget):
             self.blue_score+=1
             if self.blue_score>9 and self.current_menu_ref.sname=='ingame':
                 self.setMenu(menus.VictoryMenu(self,winner="Blue"))
+            color = (0,.1,1.,1.)
         else:
             self.red_score+=1
             if self.red_score>9 and self.current_menu_ref.sname=='ingame':
                 self.setMenu(menus.VictoryMenu(self,winner="Red"))
+            color = (1.,.1,0,1.)
+        simps.spawn_particles_at((puckposition[0],puckposition[1]), count=30,maxvel=50.,color=color,drag=1.02)
         self.scoreboard.update_scores()
         return False
 
@@ -385,11 +404,15 @@ class TestGame(Widget):
         ent1_id = arbiter.shapes[0].body.data #puck
         ent2_id = arbiter.shapes[1].body.data #paddle
         systems = self.gameworld.systems
+        pp = arbiter.shapes[0].body.position
 
         crashforce =  arbiter.total_ke
         vol = min(1,crashforce/50000000)
         if vol<0.01:return
+        ent = self.gameworld.entities[ent2_id]
+        color = ent.color
         if arbiter.is_first_contact:
+            simps.spawn_particles_at((pp[0],pp[1]), count=int(1+vol*5),maxvel=5.+vol*25.,color=(color.r,.5,color.b,.9))
             sounds.play_hitmid(vol)
         else:
             sounds.vol_hitmid(vol)
@@ -402,11 +425,15 @@ class TestGame(Widget):
         ent1_id = arbiter.shapes[0].body.data #puck
         ent2_id = arbiter.shapes[1].body.data #wall
         systems = self.gameworld.systems
+        pp = arbiter.shapes[0].body.position
 
         crashforce =  arbiter.total_ke
         vol = min(1,crashforce/50000000)
         if vol<0.01:return
+        ent = self.gameworld.entities[ent1_id]
+        color = ent.color
         if arbiter.is_first_contact:
+            simps.spawn_particles_at((pp[0],pp[1]), count=int(1+vol*5),maxvel=5.+vol*25.,color=(color.r,.5,color.b,.9))
             sounds.play_hitlow(vol)
         else:
             sounds.vol_hitlow(vol)
@@ -415,10 +442,9 @@ class TestGame(Widget):
         lerp_system.clear_lerps_from_entity(ent2_id)
         lerp_system.add_lerp_to_entity(ent2_id, 'scale', 's', 1.2+vol, .06,
             'float', callback=self.lerp_callback_wall)
-        ent = self.gameworld.entities[ent1_id]
-        lerp_system.add_lerp_to_entity(ent2_id, 'color', 'b', ent.color.b, .2,
+        lerp_system.add_lerp_to_entity(ent2_id, 'color', 'b', color.b, .2,
             'float')
-        lerp_system.add_lerp_to_entity(ent2_id, 'color', 'r', ent.color.r, .2,
+        lerp_system.add_lerp_to_entity(ent2_id, 'color', 'r', color.r, .2,
             'float')
     def postsolve_collide_sound(self, space, arbiter):
         #ent1_id = arbiter.shapes[0].body.data #puck
@@ -436,6 +462,8 @@ class TestGame(Widget):
         vol = min(1,crashforce/50000000)
         if vol<0.01:return
         if arbiter.is_first_contact:
+            pp = arbiter.shapes[0].body.position
+            simps.spawn_particles_at((pp[0],pp[1]), count=int(1+vol*5),maxvel=5.+vol*25.,color=(.8,.5,.8,.9))
             sounds.play_hithigh(vol)
         else:
             sounds.vol_hithigh(vol)
@@ -1015,6 +1043,7 @@ class TestGame(Widget):
         self.miscIDs.add(_id)
         return _id
     def create_puck(self, pos, radius=50):
+        simps.spawn_particles_at(pos,20,8,lifespan=.5,drag=1.05)
         sounds.play_spawnpuck(.3)
         x_vel = 0#randint(-100, 100)
         y_vel = 0#randint(-100, 100)
@@ -1114,6 +1143,7 @@ class TestGame(Widget):
         return aj
     def create_paddle(self, pos, color=(1,1,1,0.65), player=0, radius=75):
         angle = 0 #radians(randint(-360, 360))
+        simps.spawn_particles_at(pos,10,8)
         angular_velocity = 0 #radians(randint(-150, -150))
         radius=radius
         shape_dict = {'inner_radius': 0, 'outer_radius': radius,
@@ -1195,6 +1225,7 @@ class TestGame(Widget):
                     paddle.physics.body.apply_impulse(nearvec*100.)
     def update(self, dt):
         if not self.paused:
+            simps.update(dt)
             if self.current_menu_ref.sname == 'intro':
                 self.do_ai(dt)
             #self.do_airhole_extras(dt)
