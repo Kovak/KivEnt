@@ -127,7 +127,7 @@ cdef class RenderComponent:
 
     def __cinit__(self, bool render, str texture_key, 
         int attribute_count, width=None, height=None, 
-        vert_mesh=None, copy=False):
+        VertMesh vert_mesh=None, copy=False):
         self._render = render
         self._texture_key = texture_key
         self._attrib_count = attribute_count
