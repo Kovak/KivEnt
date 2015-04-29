@@ -4,20 +4,27 @@ TestGame:
 
 <TestGame>:
     gameworld: gameworld
+    app: app
+    system_count_hint: 8
+    prealloc_count: 25000
     GameWorld:
         id: gameworld
         gamescreenmanager: gamescreenmanager
         PositionSystem:
             system_id: 'position'
             gameworld: gameworld
+            prealloc_count: 2000
         RotateSystem:
             system_id: 'rotate'
             gameworld: gameworld
+            prealloc_count: 2000
         ColorSystem:
             system_id: 'color'
+            prealloc_count: 2000
             gameworld: gameworld
         ScaleSystem:
             system_id: 'scale'
+            prealloc_count: 2000
             gameworld: gameworld
         GameView:
             system_id: 'gameview'
@@ -33,16 +40,9 @@ TestGame:
             system_id: 'map'
             map_size: root.size
             gameworld: gameworld
-        CymunkTouchSystem:
-            system_id: 'touch_system'
-            gameworld: gameworld
-            size: root.size
-            pos: root.pos
-            max_force: 300000.
-            gameview_name: 'gameview'
-            physics_system: 'physics'
         Renderer:
             gameworld: gameworld
+            prealloc_count: 2000
             system_id: 'renderer'
             gameview: 'gameview'
             do_rotate: True
@@ -50,6 +50,7 @@ TestGame:
             do_scale: True
             shader_source: 'assets/glsl/positioncolorrotatescaleshader.glsl'
         CymunkPhysics:
+            prealloc_count: 2000
             gameworld: root.gameworld
             system_id: 'physics'
     GameScreenManager:
