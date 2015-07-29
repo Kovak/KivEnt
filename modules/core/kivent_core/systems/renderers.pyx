@@ -4,6 +4,7 @@ from cpython cimport bool
 from kivy.properties import (BooleanProperty, StringProperty, NumericProperty,
     ListProperty)
 from kivy.graphics import RenderContext, Callback
+from kivy.logger import Logger
 from kivent_core.rendering.vertex_formats cimport (VertexFormat4F, 
     VertexFormat7F, VertexFormat8F)
 from kivent_core.rendering.vertex_formats import (vertex_format_4f, 
@@ -746,6 +747,7 @@ cdef class RotateRenderer(Renderer):
                     used = components_block.used_count
                     component_count = entity_components.count
                     component_data = <void**>components_block.data
+                    batch.current_frame += 1
                     frame_data = <VertexFormat7F*>batch.get_vbo_frame_to_draw()
                     frame_indices = <GLushort*>batch.get_indices_frame_to_draw()
                     index_offset = 0

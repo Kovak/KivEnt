@@ -214,7 +214,6 @@ cdef class IndexedBatch:
         gl_log_debug_message('IndexedBatch.draw_frame-glDrawElements')
         vertices.unbind()
         indices.unbind()
-        self.current_frame += 1
 
 
     cdef void clear_frames(self):
