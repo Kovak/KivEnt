@@ -1,7 +1,7 @@
 from os import environ, remove
 from os.path import dirname, join, isfile
 from distutils.core import setup
-import kivy
+
 from distutils.extension import Extension
 try:
     from Cython.Build import cythonize
@@ -10,6 +10,9 @@ try:
 except ImportError:
     have_cython = False
 import sys
+
+environ['KIVY_DOC_INCLUDE'] = '1'
+import kivy
 
 __VERSION__ = 'unknown'
 exec(open('../core/kivent_core/version.py').read())
