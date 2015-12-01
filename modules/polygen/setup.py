@@ -11,6 +11,8 @@ except ImportError:
     have_cython = False
 import sys
 
+__VERSION__ = 'unknown'
+exec(open('../core/kivent_core/version.py').read())
 
 platform = sys.platform
 if platform == 'win32':
@@ -83,6 +85,7 @@ else:
 
 setup(
     name='KivEnt Polygen',
+    version=__VERSION__,
     description='''A game engine for the Kivy Framework. 
         https://github.com/Kovak/KivEnt for more info.''',
     author='Jacob Kovac',
