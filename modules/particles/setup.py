@@ -2,7 +2,7 @@ from os import environ, remove
 from os.path import dirname, join, isfile
 from distutils.core import setup
 from distutils.extension import Extension
-import kivy
+
 try:
     from Cython.Build import cythonize
     from Cython.Distutils import build_ext
@@ -10,6 +10,12 @@ try:
 except ImportError:
     have_cython = False
 import sys
+
+environ['KIVY_DOC_INCLUDE'] = '1'
+import kivy
+
+__VERSION__ = 'unknown'
+exec(open('../core/kivent_core/version.py').read())
 
 platform = sys.platform
 if platform == 'win32':
@@ -90,6 +96,7 @@ else:
 
 setup(
     name='KivEnt particles',
+    version=__VERSION__,
     description='''A game engine for the Kivy Framework. 
         https://github.com/Kovak/KivEnt for more info.''',
     author='Jacob Kovac',
