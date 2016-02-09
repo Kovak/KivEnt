@@ -501,6 +501,78 @@ cdef class VertexModel:
         vertex4.pos = [w, -h]
         vertex4.uvs = [u1, v0]
 
+    def flip_textured_rectangle_horizontally(self):
+        '''
+        Flip the texture of the quad horizontally
+        Will assume your using a textured quad model.
+        Will assume your vertex format have a 'pos' and 'uvs' array of size 2.
+
+        '''
+        vertex1 = self[0]
+        vertex2 = self[1]
+        vertex3 = self[2]
+        vertex4 = self[3]
+        u0, v0 = vertex1.uvs
+        u1, v1 = vertex3.uvs
+        vertex1.uvs = [u1, v0]
+        vertex2.uvs = [u1, v1]
+        vertex3.uvs = [u0, v1]
+        vertex4.uvs = [u0, v0]
+
+    def flip_textured_rectangle_vertically(self):
+        '''
+        Flip the texture of the quad vertically
+        Will assume your using a textured quad model.
+        Will assume your vertex format have a 'pos' and 'uvs' array of size 2.
+
+        '''
+        vertex1 = self[0]
+        vertex2 = self[1]
+        vertex3 = self[2]
+        vertex4 = self[3]
+        u0, v0 = vertex1.uvs
+        u1, v1 = vertex3.uvs
+        vertex1.uvs = [u0, v1]
+        vertex2.uvs = [u0, v0]
+        vertex3.uvs = [u1, v0]
+        vertex4.uvs = [u1, v1]
+
+    def rotate_textured_rectangle_clockwise(self):
+        '''
+        Rotate the texture of the quad 90 degress clockwise
+        Will assume your using a textured quad model.
+        Will assume your vertex format have a 'pos' and 'uvs' array of size 2.
+
+        '''
+        vertex1 = self[0]
+        vertex2 = self[1]
+        vertex3 = self[2]
+        vertex4 = self[3]
+        u0, v0 = vertex1.uvs
+        u1, v1 = vertex3.uvs
+        vertex1.uvs = [u0, v1]
+        vertex2.uvs = [u1, v1]
+        vertex3.uvs = [u1, v0]
+        vertex4.uvs = [u0, v0]
+
+    def rotate_textured_rectangle_counter_clockwise(self):
+        '''
+        Rotate the texture of the quad 90 degress counter clockwise
+        Will assume your using a textured quad model.
+        Will assume your vertex format have a 'pos' and 'uvs' array of size 2.
+
+        '''
+        vertex1 = self[0]
+        vertex2 = self[1]
+        vertex3 = self[2]
+        vertex4 = self[3]
+        u0, v0 = vertex1.uvs
+        u1, v1 = vertex3.uvs
+        vertex1.uvs = [u1, v0]
+        vertex2.uvs = [u0, v0]
+        vertex3.uvs = [u0, v1]
+        vertex4.uvs = [u1, v1]
+
     property vertices:
 
         def __get__(self):
