@@ -1,0 +1,86 @@
+#:kivy 1.9.0
+#:import main __main__
+#:import path os.path
+#:import dirname os.path.dirname
+
+#:import GameWorld kivent_core.gameworld.GameWorld
+#:import Renderer kivent_core.systems.renderers.Renderer
+#:import TiledGameMap kivent_tiles.systems.gamemap.TiledGameMap
+#:import TileAnimator kivent_tiles.systems.animation.TiledAnimator
+#:import PositionSystem2D kivent_core.systems.position_systems.PositionSystem2D
+
+
+TestGame:
+<TestGame>:
+    gameworld: gameworld
+    app: app
+    GameWorld:
+        id: gameworld
+        gamescreenmanager: gamescreenmanager
+        size_of_gameworld: 20 * 1024
+        zones: {'general': 20 * 1024}
+        PositionSystem2D:
+            system_id: 'position'
+            gameworld: gameworld
+            zones: ['general']
+        Renderer:
+            id: map_renderer
+            shader_source: path.join(dirname(path.abspath(main.__file__)), 'assets/sharders/positionshader.glsl')
+            system_id: 'map_renderer'
+            gameworld: gameworld
+            gameview: 'camera'
+            zones: ['general']
+            system_names: ['map_renderer', 'position']
+            frame_count: 1
+            force_update: True
+            static_rendering: True
+        GameView:
+            id: gameview
+            currentmap: tilemap
+            system_id: 'camera'
+            gameworld: gameworld
+            size: root.size
+            pos: root.pos
+            do_touch_zoom: True
+            updateable: True
+        TiledAnimator:
+            id: map_animator
+            system_id: 'map_animator'
+            renderer_obj: map_renderer
+            gameworld: gameworld
+            updateable: True
+        TiledGameMap:
+            id: tilemap
+            system_id: 'tilemap'
+            map_source: path.join(dirname(path.abspath(main.__file__)), 'assets/maps/test_desert/desert.tmx')
+            atlas_source: path.join(dirname(path.abspath(main.__file__)), 'assets/textures/testatlas.atlas')
+            gameworld: gameworld
+            gameview: 'camera'
+            renderer: 'map_renderer'
+            animator_obj: map_animator
+    GameScreenManager:
+        id: gamescreenmanager
+        size: root.size
+        pos: root.pos
+        gameworld: gameworld
+
+<GameScreenManager>:
+    MainScreen:
+        id: main_screen
+
+<MainScreen@GameScreen>:
+    name: 'main'
+    FloatLayout:
+        DebugPanel:
+            size_hint: (0.2, 0.1)
+            pos_hint: {'x': 0.225, 'y': 0.025}
+
+<DebugPanel>:
+    Label:
+        pos: root.pos
+        size: root.size
+        font_size: root.size[1] * 0.5
+        halign: 'center'
+        valign: 'middle'
+        color: (1, 1, 1, 1)
+        text: 'FPS: ' + root.fps if root.fps != None else 'FPS:'
