@@ -3,7 +3,7 @@ from itertools import ifilter
 
 from kivy.factory import Factory
 from kivent_core.systems.gamesystem import GameSystem
-from kivy.properties import StringProperty, ListProperty, ObjectProperty, BooleanProperty
+from kivy.properties import ListProperty, ObjectProperty, BooleanProperty
 
 
 class TiledAnimator(GameSystem):
