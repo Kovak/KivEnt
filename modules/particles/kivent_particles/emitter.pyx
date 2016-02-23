@@ -198,6 +198,7 @@ cdef class ParticleEmitter:
         self._rotate_per_second = 0.0
         self._texture = None
         self._rotate_per_second_variance = 0.0
+        self.active_particles = []
         cdef int x
         for x in range(2):
             self._gravity[x] = 0.           
@@ -221,6 +222,10 @@ cdef class ParticleEmitter:
         else:
             self._emission_rate = float(
                 self._number_of_particles) / self._life_span
+
+    property pos:
+        def __get__(self):
+            return (self._pos[0], self._pos[1])
 
     property texture:
 
@@ -662,7 +667,7 @@ cdef class EmitterSystem(StaticMemGameSystem):
             'pos_variance': {'count': 2, 'type': 'slider', 'step': 1.,
                 'name': 'Pos Variance', 'value_names': ['x', 'y'],
                 'bounds': [(0., 1000.), (0., 1000.)]},
-            'life_span': {'count': 1, 'type': 'slider', 'step': .25,
+            'life_span': {'count': 1, 'type': 'slider', 'step': .05,
                 'name': 'Lifespan',
                 'bounds': [(0., 20.)]},
             'number_of_particles': {'count': 1, 'type': 'slider', 'step': 1,
@@ -851,8 +856,7 @@ cdef class EmitterSystem(StaticMemGameSystem):
         for effect_name in args:
             emitter = self.create_effect(effect_name)
             index = self.insert_effect_into_component(emitter, py_component)
-            emitter._emit_angle = cy_radians(
-                rot_comp.r) + emitter._emit_angle_offset
+            emitter._emit_angle = rot_comp.r + emitter._emit_angle_offset
             rotate_offset(emitter._pos_offset, emitter._emit_angle, 
                 resulting_offset)
             emitter._pos[0] = pos_comp.x + resulting_offset[0]
@@ -873,9 +877,9 @@ cdef class EmitterSystem(StaticMemGameSystem):
         cdef float angle_offset, time_between_particles
         cdef float[2] resulting_offset
         cdef int number_of_updates
-
+        cdef list active_particles
         cdef ParticleSystem particle_system = self.particle_system
-
+        cdef unsigned int particle_id
         for i in range(count):
             real_index = i*component_count
             if component_data[real_index] == NULL:
@@ -883,19 +887,21 @@ cdef class EmitterSystem(StaticMemGameSystem):
             emitter_comp = <EmitterStruct*>component_data[real_index]
             pos_comp = <PositionStruct2D*>component_data[real_index+1]
             rot_comp = <RotateStruct2D*>component_data[real_index+2]
+            ecount = 0
             for e in range(MAX_EMITTERS):
                 if emitter_comp.emitters[e] is NULL:
                     continue
+                ecount += 1
                 emitter = <ParticleEmitter>emitter_comp.emitters[e]
                 if not emitter._paused:
                     emitter._emit_angle = (
-                        cy_radians(rot_comp.r) + emitter._emit_angle_offset)
+                        rot_comp.r + emitter._emit_angle_offset
+                        )
                     rotate_offset(emitter._pos_offset, 
                         emitter._emit_angle, 
                         resulting_offset)
                     emitter._pos[0] = pos_comp.x + resulting_offset[0]
                     emitter._pos[1] = pos_comp.y + resulting_offset[1]
-                    
                     if emitter._emission_rate <= 0.0:
                         number_of_updates = 0
                     else:
@@ -905,12 +911,12 @@ cdef class EmitterSystem(StaticMemGameSystem):
                             emitter._frame_time / time_between_particles)
                         emitter._frame_time -= (
                             time_between_particles * number_of_updates)
+                    active_particles = emitter.active_particles
                     for c in range(number_of_updates):
-                        if emitter._current_particles < (
-                            emitter._number_of_particles):
-                            emitter._current_particles += 1
-                            particle_system.create_particle(emitter)
-                
+                        particle_id = particle_system.create_particle(emitter)
+                        active_particles.append(particle_id)
+
+
     def flatten_effect_to_dict(self, ParticleEmitter emitter):
         '''
         Args:
@@ -1128,20 +1134,39 @@ cdef class EmitterSystem(StaticMemGameSystem):
         cdef unsigned int component_index = entity.get_component_index(
             self.system_id)
         cdef EmitterComponent py_component = self.components[component_index]
+        cdef ParticleEmitter emitter = py_component._emitters[index]
+        entities_to_remove = [x for x in emitter.active_particles]
         py_component._emitters[index] = None
+        remove_entity = self.gameworld.remove_entity
+        for each in entities_to_remove:
+            remove_entity(each)
         cdef EmitterStruct* pointer = <EmitterStruct*>py_component.pointer
         pointer.emitters[index] = NULL
+
 
     def clear_component(self, unsigned int component_index):
         cdef MemoryZone memory_zone = self.imz_components.memory_zone
         cdef EmitterStruct* pointer = <EmitterStruct*>(
             memory_zone.get_pointer(component_index))
         cdef EmitterComponent py_component = self.components[component_index]
+        cdef ParticleEmitter emitter
+        for index, emitter in enumerate(py_component._emitters):
+            if emitter is not None:
+                self.remove_effect(pointer.entity_id, index)
         pointer.entity_id = -1
-        py_component._emitters = [None for x in range(MAX_EMITTERS)]
         cdef int i
+
         for i in range(MAX_EMITTERS):
             pointer.emitters[i] = NULL
-            
+        py_component._emitters = [None for x in range(MAX_EMITTERS)]
+
+
+    def remove_component(self, unsigned int component_index):
+        cdef MemoryZone memory_zone = self.imz_components.memory_zone
+        cdef EmitterStruct* pointer = <EmitterStruct*>(
+            memory_zone.get_pointer(component_index))
+        self.entity_components.remove_entity(pointer.entity_id)
+        super(EmitterSystem, self).remove_component(component_index)
+
 
 Factory.register('EmitterSystem', cls=EmitterSystem)

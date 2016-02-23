@@ -1,0 +1,41 @@
+#:kivy 1.9.0
+#:import get_asset_path __main__.get_asset_path
+
+TestGame:
+
+<TestGame>:
+    gameworld: gameworld
+    GameWorld:
+        id: gameworld
+        gamescreenmanager: gamescreenmanager
+        size_of_gameworld: 100*1024
+        system_count: 3
+        zones: {'general': 10000}
+        PositionSystem2D:
+            system_id: 'position'
+            gameworld: gameworld
+            zones: ['general']
+        Renderer:
+            id: renderer
+            gameworld: gameworld
+            system_id: 'renderer'
+            zones: ['general']
+            frame_count: 2
+            gameview: 'camera1'
+            updateable: True
+            shader_source: get_asset_path('positionshader.glsl', 'assets/glsl')
+        GameView:
+            system_id: 'camera1'
+            gameworld: gameworld
+            size: root.size
+            pos: root.pos
+            do_scroll_lock: False
+            id: camera1
+        TileSystem:
+            system_id: 'tiles'
+            id: tiles
+            gameworld: gameworld
+            camera_pos: camera1.camera_pos
+            camera_size: camera1.size
+    GameScreenManager:
+        id: gamescreenmanager

@@ -199,7 +199,10 @@ cdef class SystemManager:
             system_index (unsigned int): Index of the system in the **systems**
             list.
         '''
-        return self.system_index[system_name] 
+        try:
+            return self.system_index[system_name]
+        except KeyError:
+            return -1
 
     def set_system_count(self, unsigned int system_count):
         '''Set the system_count, which is the number of systems that will

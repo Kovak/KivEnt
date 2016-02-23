@@ -27,4 +27,4 @@ cdef class ParticleComponent(MemComponent):
 
 cdef class ParticleSystem(StaticMemGameSystem):
     cdef list _system_names
-    cdef int create_particle(self, ParticleEmitter emitter) except -1
+    cdef unsigned int create_particle(self, ParticleEmitter emitter) except -1

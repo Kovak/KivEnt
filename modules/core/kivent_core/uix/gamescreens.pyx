@@ -14,15 +14,7 @@ class GameScreenManager(ScreenManager):
         if state_name is not None:
             self.current = state_name
 
-    def on_touch_down(self, touch):
-        super(GameScreenManager, self).on_touch_down(touch)
 
-    def on_touch_up(self, touch):
-        super(GameScreenManager, self).on_touch_up(touch)
-        
-    def on_touch_move(self, touch):
-        super(GameScreenManager, self).on_touch_move(touch)
-        
 class GameScreen(Screen):
     name = StringProperty('default_screen_id')
 

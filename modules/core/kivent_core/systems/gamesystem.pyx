@@ -123,6 +123,7 @@ cdef class GameSystem(CWidget):
         self.free_indices = deque()
         self.component_count = 0
         self._frame_time = 0.0
+        self.copied_components = {}
 
     def allocate(self, Buffer master_buffer, dict reserve_spec):
         '''
@@ -257,6 +258,15 @@ cdef class GameSystem(CWidget):
         entity_manager.set_component(entity_id, component_index, 
             system_index)
         self.init_component(component_index, entity_id, zone, args)
+        return component_index
+
+    def copy_component(self, unsigned int entity_id, 
+                       unsigned int component_index):
+        cdef EntityManager entity_manager = self.gameworld.entity_manager
+        cdef unsigned int system_index = self.system_index
+        entity_manager.set_component(entity_id, component_index, 
+            system_index)
+        self.copied_components[entity_id] = component_index
         return component_index
 
     def remove_component(self, unsigned int component_index):

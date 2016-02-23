@@ -276,7 +276,7 @@ cdef class ParticleSystem(StaticMemGameSystem):
         super(ParticleSystem, self).__init__(**kwargs)
         self._system_names = [x for x in self.system_names]
 
-    cdef int create_particle(self, ParticleEmitter emitter) except -1:
+    cdef unsigned int create_particle(self, ParticleEmitter emitter) except -1:
         cdef list system_names = self._system_names
         cdef str renderer_name = self.renderer_name
         create_dict = {
@@ -289,9 +289,8 @@ cdef class ParticleSystem(StaticMemGameSystem):
         }
         create_order = [system_names[1], system_names[2], system_names[3], 
                         system_names[4], system_names[0], renderer_name]
-        self.gameworld.init_entity(create_dict, create_order, 
+        return self.gameworld.init_entity(create_dict, create_order, 
             zone=self.particle_zone)
-        return 1
 
     def on_system_names(self, instance, value):
         self._system_names = [x for x in value]
@@ -449,7 +448,6 @@ cdef class ParticleSystem(StaticMemGameSystem):
 
         gameworld = self.gameworld
         remove_entity = gameworld.remove_entity
-
         for i in range(count):
             real_index = i*component_count
             if component_data[real_index] == NULL:
@@ -513,6 +511,7 @@ cdef class ParticleSystem(StaticMemGameSystem):
             color_copy(particle_comp.color, color_comp.color)
             if particle_comp.current_time >= particle_comp.total_time:
                 emitter._current_particles -= 1
+                emitter.active_particles.remove(particle_comp.entity_id)
                 remove_entity(particle_comp.entity_id)
 
 

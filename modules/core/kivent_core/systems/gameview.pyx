@@ -82,6 +82,8 @@ cdef class GameView(GameSystem):
     move_speed_multiplier = NumericProperty(1.0)
     do_components = BooleanProperty(False)
     currentmap = ObjectProperty(None)
+    window_size = ListProperty((100., 100.))
+    touch_pass_through = BooleanProperty(False)
 
     def __init__(self, **kwargs):
         super(GameView, self).__init__(**kwargs)
@@ -102,7 +104,7 @@ cdef class GameView(GameSystem):
         of gameview.'''
         camera_pos = self.camera_pos
         camera_size = self.size
-        pos = self.pos
+        x, y = self.pos
         camera_scale = self.camera_scale
         proj = self.matrix.view_clip(
             -camera_pos[0], 
@@ -175,28 +177,33 @@ cdef class GameView(GameSystem):
             self.camera_pos[1] += dist_y
         self.update_render_state()
 
+    def collide_point(self, x, y):
+        w, h = self.window_size
+        px, py = self.pos
+        return px <= x <= px + w and py <= y <= py + h
+
     def on_touch_down(self, touch):
-        converted_pos = self.convert_from_screen_to_world(touch.pos)
+        cx, cy = self.convert_from_screen_to_world(touch.pos)
         old_x, old_y = touch.x, touch.y
-        touch.x = converted_pos[0]
-        touch.y = converted_pos[1]
-        if super(GameView, self).on_touch_down(touch):
+        touch.x = cx
+        touch.y = cy
+        touch.pos = (cx, cy)
+        super_result = super(GameView, self).on_touch_down(touch)
+        touch.x = old_x 
+        touch.y = old_y
+        touch.pos = (old_x, old_y)
+        if self.collide_point(*touch.pos) and not self.touch_pass_through:
+            touch.grab(self)
+            self._touch_count += 1
+            self._touches.append(touch)
+            camera_pos = self.camera_pos
+            size = self.size
+            touch.ud['world_pos'] = self.get_camera_center()
+            touch.ud['start_pos'] = touch.pos
+            touch.ud['start_scale'] = self.camera_scale
             return True
         else:
-            touch.x = old_x 
-            touch.y = old_y
-            if self.collide_point(*touch.pos):
-                touch.grab(self)
-                self._touch_count += 1
-                self._touches.append(touch)
-                camera_pos = self.camera_pos
-                size = self.size
-                touch.ud['world_pos'] = self.get_camera_center()
-                touch.ud['start_pos'] = touch.pos
-                touch.ud['start_scale'] = self.camera_scale
-                return True
-            else:
-                return False
+            return False
 
     def on_touch_up(self, touch):
         converted_pos = self.convert_from_screen_to_world(touch.pos)
@@ -209,6 +216,9 @@ cdef class GameView(GameSystem):
         if touch.grab_current is self:
             self._touch_count -= 1
             self._touches.remove(touch)
+            return True
+        else:
+            return False
 
     def get_camera_center(self):
         '''Returns the current center point of the cameras view'''
@@ -254,7 +264,6 @@ cdef class GameView(GameSystem):
             move_speed_multiplier = self.move_speed_multiplier
             if not self.focus_entity and self.do_touch_zoom:
                 if self._touch_count > 1:
-
                     points = [Vector(t.x, t.y) for t in self._touches]
                     anchor = max(
                         points[:], key=lambda p: p.distance(touch.pos))
@@ -267,7 +276,6 @@ cdef class GameView(GameSystem):
                     new_line = Vector(*touch.pos) - anchor
                     if not old_line.length() or not new_line.length():   # div by zero
                         return
-
                     new_scale = (old_line.length() / new_line.length()) * (
                         touch.ud['start_scale'])
                     if new_scale > self.scale_max:
@@ -277,9 +285,7 @@ cdef class GameView(GameSystem):
                     else:
                         self.camera_scale = new_scale
                     self.look_at(anchor_touch.ud['world_pos'])
-                    
-
-
+                    return True
             if not self.focus_entity and self.do_scroll:
                 if self._touch_count == 1:
                     camera_scale = self.camera_scale
@@ -296,31 +302,46 @@ cdef class GameView(GameSystem):
         camera_size = self.size
         pos = self.pos
         scale = self.camera_scale
-        size = camera_size[0]*scale, camera_size[1]*scale
         map_size = currentmap.map_size
+        window_size = self.window_size
         margins = currentmap.margins
         camera_pos = self.camera_pos
-        cdef float x= pos[0]
-        cdef float y = pos[1]
-        cdef float w = size[0]
-        cdef float h = size[1]
+        cdef float xr = window_size[0] / camera_size[0]
+        cdef float xy = window_size[1] / camera_size[1]
+        cdef float x= pos[0] * scale
+        cdef float y = pos[1] * scale
+        cdef float w = camera_size[0] * scale
+        cdef float h = camera_size[1] * scale
         cdef float mw = map_size[0]
         cdef float mh = map_size[1]
         cdef float marg_x = margins[0]
         cdef float marg_y = margins[1]
         cdef float cx = camera_pos[0]
         cdef float cy = camera_pos[1]
-
-        if cx + distance_x > x + marg_x:
-            distance_x = x - cx + marg_x
-        elif cx + mw + distance_x <= x + w - marg_x:
-            distance_x = x + w - marg_x - cx - mw
-
-        if cy + distance_y > y + marg_y:
-            distance_y = y - cy + marg_y 
-        elif cy + mh + distance_y <= y + h - marg_y:
-            distance_y = y + h - cy - mh  - marg_y
-
+        cdef float camera_right = cx + w
+        cdef float camera_top = cy + h
+        cdef float sw = w * xr
+        cdef float sh = h * xy
+        if mw < sw:
+            if cx + distance_x < x:
+                distance_x = x - cx
+            elif cx + distance_x + mw > x + sw:
+                distance_x = x + sw - cx - mw
+        else:
+            if cx + distance_x > x + marg_x:
+                distance_x = x - cx + marg_x
+            elif cx + mw + distance_x <= x + sw - marg_x:
+                distance_x = x + sw - marg_x - cx - mw
+        if mh < sh:
+            if cy + distance_y < y:
+                distance_y = y - cy
+            elif cy + distance_y + mh > y + sh:
+                distance_y = y + sh - cy - mh
+        else:
+            if cy + distance_y > y + marg_y:
+                distance_y = y - cy + marg_y 
+            elif cy + mh + distance_y <= y + sh - marg_y:
+                distance_y = y + sh - cy - mh  - marg_y
         return distance_x, distance_y
 
 

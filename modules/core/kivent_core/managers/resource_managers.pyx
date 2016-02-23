@@ -11,6 +11,7 @@ try:
     import cPickle as pickle
 except: 
     import pickle
+from kivent_core.rendering.svg_loader cimport SVG, SVGModelInfo
 
 cdef class ModelManager:
     '''
@@ -64,6 +65,11 @@ cdef class ModelManager:
         self._models = {}
         self._key_counts = {}
         self._model_register = {}
+        self._svg_index = {}
+
+    property svg_index:
+        def __get__(self):
+            return self._svg_index
 
     property models:
         def __get__(self):
@@ -76,6 +82,7 @@ cdef class ModelManager:
     property model_register:
         def __get__(self):
             return self._model_register
+
 
     def register_entity_with_model(self, unsigned int entity_id, str system_id,
         str model_name):
@@ -228,6 +235,118 @@ cdef class ModelManager:
                 ind_space=str(index_size//1024),
                 ind_count=str(index_size//sizeof(unsigned short)),))
         return total_count
+
+    def load_model_from_model_info(self, SVGModelInfo info, str svg_name):
+        '''
+        Turns the data in a SVGModelInfo to an actual Model for use in 
+        your game. 
+
+        Args:
+
+            info (SVGModelInfo): The data for the model you want to load.
+
+            svg_name (str): The name of the svg file, previously returned by 
+            **get_model_info_for_svg**.
+
+        Return:
+            str: The key this model is registered under. Will be svg_name + '_'
+            + element_id for the SVGModelInfo.
+
+        '''
+        model_key = self.load_model(
+            'vertex_format_2f4ub', info.vertex_count, 
+            info.index_count, svg_name + '_' + info.element_id,
+            indices=info.indices, vertices=info.vertices,
+            )
+        self._svg_index[svg_name][info.element_id] = model_key
+        return model_key
+
+    def combine_model_infos(self, list infos):
+        '''
+        Takes a list of SVGModelInfo objects and combines them into the 
+        minimum number of models that will fit that data. Each model will 
+        be no more than 65535 vertices, as this is the limit to number of 
+        vertices in a single model in ES2.0. 
+
+        Args:
+            infos (list): List of SVGModelInfo to combine.
+
+        Return:
+            list: New list of SVGModelInfo combined into the minimum number
+            necessary to display the data.
+
+        '''
+        current_info = None
+        final_infos = []
+        while len(infos) > 0:
+            new_info = infos.pop(0)
+            if current_info is None:
+                current_info = new_info
+            elif current_info.vertex_count + new_info.vertex_count < 65535:
+                current_info = current_info.combine_model_info(new_info)
+            else:
+                final_infos.append(current_info)
+                current_info = new_info
+        else:
+            final_infos.append(current_info)
+        return final_infos
+
+    def get_center_and_bbox_from_infos(self, list infos):
+        '''
+        Gets the bounding box and center info for the provided list of 
+        SVGModelInfo.
+
+        Args:
+            infos (list): List of SVGModelInfo to find the bounding box
+            and center for.
+
+        Return:
+            dict: with keys 'center' and 'bbox'. center is a 2-tuple of 
+            center_x, center_y coordinates. bbox is a 4-tuple of leftmost x,
+            bottom y, rightmost x, top y.
+            
+        '''
+        cdef float top, left, right, bot, x, y
+        initial_pos = infos[0].vertices[0]['pos']
+        top = bot = initial_pos[1]
+        left = right = initial_pos[0]
+        cdef SVGModelInfo info
+        for info in infos:
+            for i in range(info.vertex_count):
+                vertex = info.vertices[i]
+                x, y = vertex['pos']
+                if x < left:
+                    left = x
+                elif x > right:
+                    right = x
+                if y < bot:
+                    bot = y
+                elif y > top:
+                    top = y
+        bot_left = (bot, left)
+        top_left = (top, left)
+        bot_right = (bot, right)
+        top_right = (top, right)
+        center_y = bot + (top - bot) / 2.
+        center_x = left + (right - left) / 2.
+        return {'center': (center_x, center_y),
+                'bbox': (left, bot, right, top)}
+
+    def get_model_info_for_svg(self, str source, str svg_name=None):
+        '''
+        Returns the SVGModelInfo objects representing the elements in an 
+        svg file. You can then parse this data depending on your needs 
+        before loading the final assets. Use **load_model_from_model_info**
+        to load your assets.
+        '''
+        if svg_name is None:
+            svg_name = str(path.splitext(path.basename(source))[0])
+        if svg_name in self._svg_index:
+            raise KeyError()
+        self._svg_index[svg_name] = {}
+        cdef SVG svg = SVG(source)
+        cdef list svg_data = svg.get_model_data()
+        return {'model_info': svg_data, 'svg_name': svg_name}
 
     def load_model(self, str format_name, unsigned int vertex_count, 
         unsigned int index_count, str name, do_copy=False, indices=None,

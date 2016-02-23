@@ -18,6 +18,8 @@ cdef class CymunkPhysics(StaticMemGameSystem):
     cdef list bb_query_result
     cdef list on_screen_result
     cdef list segment_query_result
+    cdef int collision_type_count
+    cdef dict collision_type_index
 
     cdef unsigned int _init_component(self, unsigned int component_index, 
         unsigned int entity_id, cpBody* body, str zone_name) except -1

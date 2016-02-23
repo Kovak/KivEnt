@@ -5,3 +5,4 @@ cdef class GameSystem(CWidget):
     cdef list py_components
     cdef unsigned int component_count
     cdef object free_indices
+    cdef dict copied_components

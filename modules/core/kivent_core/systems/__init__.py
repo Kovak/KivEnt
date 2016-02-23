@@ -8,3 +8,4 @@ from . import color_systems
 from . import position_systems
 from . import gamemap
 from . import renderers
+from . import lifespan

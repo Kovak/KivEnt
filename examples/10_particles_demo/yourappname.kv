@@ -1,0 +1,56 @@
+#:kivy 1.9.0
+
+TestGame:
+
+<TestGame>:
+	gameworld: gameworld
+    GameWorld:
+        id: gameworld
+        gamescreenmanager: gamescreenmanager
+        size_of_gameworld: 100*1024
+        size_of_entity_block: 128
+        system_count: 12
+        zones: {'general': 10000}
+        PositionSystem2D:
+            system_id: 'position'
+            gameworld: gameworld
+            zones: ['general', 'particles']
+            size_of_component_block: 128
+        RotateSystem2D:
+            gameworld: gameworld
+            zones: ['general', 'particles']
+        ScaleSystem2D:
+            gameworld: gameworld
+            zones: ['general', 'particles']
+        ColorSystem:
+            gameworld: gameworld
+            zones: ['general', 'particles']
+        ParticleSystem:
+            id: particles
+            gameworld: gameworld
+            zones: ['particles']
+            particle_zone: 'particles'
+        ParticleRenderer:
+            gameworld: gameworld
+            zones: ['particles']
+            shader_source: 'assets/glsl/positionrotatecolorscale.glsl'
+            frame_count: 3
+            updateable: True
+        EmitterSystem:
+            id: emitter
+            gameworld: gameworld
+            zones: ['general']
+            particle_system: particles.__self__
+        Renderer:
+            zones: ['general']
+            gameworld: gameworld
+            shader_source: 'assets/glsl/positionshader.glsl'
+            frame_count: 3
+            updateable: True
+    GameScreenManager:
+        id: gamescreenmanager
+        size: root.size
+        pos: root.pos
+        gameworld: gameworld
+        GameScreen:
+        	name: 'main'

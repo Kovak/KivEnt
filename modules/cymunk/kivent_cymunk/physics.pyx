@@ -142,8 +142,16 @@ cdef class CymunkPhysics(StaticMemGameSystem):
         self.bb_query_result = []
         self.segment_query_result = []
         self.init_physics()
+        self.collision_type_count = 0
+        self.collision_type_index = {}
+
+    def register_collision_type(self, str type_name):
+        count = self.collision_type_count
+        self.collision_type_index[type_name] = count
+        self.collision_type_count += 1
+        return count
         
-    def add_collision_handler(self, int type_a, int type_b, begin_func=None, 
+    def add_collision_handler(self, type_a, type_b, begin_func=None, 
         pre_solve_func=None, post_solve_func=None, separate_func=None):
         '''
         Args:
@@ -182,10 +190,16 @@ cdef class CymunkPhysics(StaticMemGameSystem):
             second_id = arbiter.shapes[1].body.data
 
         '''
+        if isinstance(type_a, str):
+            type_a = self.collision_type_index[type_a]
+        if isinstance(type_b, str):
+            type_b = self.collision_type_index[type_b]
         cdef Space space = self.space
-        space.add_collision_handler(type_a, type_b, 
+        space.add_collision_handler(
+            type_a, type_b, 
             begin_func, pre_solve_func, 
-            post_solve_func, separate_func)
+            post_solve_func, separate_func
+            )
 
     def on_gravity(self, instance, value):
         '''Event handler that sets the gravity of **space**.'''
@@ -248,7 +262,7 @@ cdef class CymunkPhysics(StaticMemGameSystem):
         Queries collisions inside a box.
         '''
         cdef Space space = self.space
-        self.ignore_groups=ignore_groups
+        self.ignore_groups = ignore_groups
         bb = BB(
             box_to_query[0], box_to_query[1], box_to_query[2], box_to_query[3])
         self.bb_query_result = []
@@ -411,7 +425,8 @@ cdef class CymunkPhysics(StaticMemGameSystem):
             new_shape.friction = shape['friction']
             new_shape.elasticity = shape['elasticity']
             new_shape.collision_type = shape['collision_type']
-            if 'group' in shape: new_shape.group = shape['group']
+            if 'group' in shape: 
+                new_shape.group = shape['group']
             shapes.append(new_shape)
             space.add(new_shape)
             space.reindex_shape(new_shape)

@@ -3,6 +3,12 @@ from kivent_core.systems.staticmemgamesystem cimport MemComponent
 from kivent_core.memory_handlers.block cimport MemoryBlock
 from kivent_core.memory_handlers.indexing cimport IndexedMemoryZone
 
+class NoSystemWithNameError(Exception):
+    pass
+
+class SystemHasNoComponentsError(Exception):
+    pass
+
 class NoComponentActiveError(Exception):
     pass
 
@@ -34,13 +40,22 @@ cdef class Entity(MemComponent):
         self.system_manager = None
 
     def __getattr__(self, str name):
-        cdef unsigned int system_index = self.system_manager.get_system_index(
-            name)
-        system = self.system_manager[name]
+        system_manager = self.system_manager
+        cdef unsigned int system_index = system_manager.get_system_index(name)
+        if system_index == -1:
+            raise NoSystemWithNameError(
+                'There is no system named {system_name}'
+                .format(system_name=name))
+        if system_index >= system_manager.system_count:
+            raise SystemHasNoComponentsError(
+                'The {system_name} system has no components'
+                .format(system_name=name))
+        system = system_manager[name]
         cdef unsigned int* pointer = <unsigned int*>self.pointer
         cdef unsigned int component_index = pointer[system_index+1]
         if component_index == -1:
-            raise NoComponentActiveError('Entity {ent_id} have no component'
+            raise NoComponentActiveError(
+                'Entity {ent_id} have no component'
                 'active for {system_name}'.format(ent_id=str(self._id), 
                     system_name=name))
         return system.components[component_index]

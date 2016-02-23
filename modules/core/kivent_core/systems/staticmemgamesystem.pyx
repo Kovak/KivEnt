@@ -15,6 +15,7 @@ from kivent_core.memory_handlers.zonedblock cimport ZonedBlock
 from gamesystem cimport GameSystem
 from kivent_core.managers.system_manager cimport SystemManager
 from cpython cimport bool
+from kivent_core.memory_handlers.utils import memrange
 
 
 cdef class MemComponent:
@@ -137,6 +138,14 @@ cdef class StaticMemGameSystem(GameSystem):
         self.clear_component(new_id)
         return new_id
 
+    def clear_entities(self):
+        entities_to_clear = [
+            component.entity_id for component in memrange(self.components)
+            ]
+        gameworld = self.gameworld
+        for entity_id in entities_to_clear:
+            gameworld.remove_entity(entity_id)
+
     def allocate(self, Buffer master_buffer, dict reserve_spec):
         '''
         Allocates an IndexedMemoryZone from the buffer provided following
@@ -149,7 +158,7 @@ cdef class StaticMemGameSystem(GameSystem):
         makes it easier to retrieve various component data for processing.
 
         Args:
-            master_buffer (Buffer): The buffer that this system will allocate
+            master_buffer (Buffer): The buffer that this syscdtem will allocate
             itself from.
 
             reserve_spec (dict): A key value pairing of zone name (str) 

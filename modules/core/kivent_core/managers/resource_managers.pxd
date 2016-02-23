@@ -14,3 +14,4 @@ cdef class ModelManager:
     cdef dict _models
     cdef dict _key_counts
     cdef dict _model_register
+    cdef dict _svg_index

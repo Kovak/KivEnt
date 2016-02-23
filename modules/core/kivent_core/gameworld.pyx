@@ -20,6 +20,7 @@ from kivent_core.memory_handlers.utils cimport memrange
 from kivent_core.rendering.vertex_formats cimport (format_registrar, 
     FormatConfig)
 from kivent_core.managers.resource_managers cimport ModelManager
+from kivent_core.managers.sound_manager import SoundManager
 from kivy.logger import Logger
 debug = False
 
@@ -124,6 +125,7 @@ class GameWorld(Widget):
         self._system_count = DEFAULT_SYSTEM_COUNT
         self.entities_to_remove = []
         self.system_manager = SystemManager()
+        self.sound_manager = SoundManager()
         self.master_buffer = None
         self.model_manager = ModelManager()
 
@@ -377,20 +379,35 @@ class GameWorld(Widget):
         This is the function used to create a new entity. It returns the 
         entity_id of the created entity. components_to_use is a dict of 
         system_id, args to generate_component function. component_order is
-        the order in which the components should be initialized'''
+        the order in which the components should be initialized
+
+        If an Entity is provided as the value in the components_to_use dict,
+        instead of creating a new component the new Entity will use the 
+        provided Entity's component. Be careful to always remove the parent
+        Entity last. This accounting is not currently done for you, you must
+        keep track of Entities linked in this way on your own.
+        '''
         cdef unsigned int entity_id = self.get_entity(zone)
         cdef Entity entity = self.entities[entity_id]
         entity.load_order = component_order
         cdef SystemManager system_manager = self.system_manager
         entity.system_manager = system_manager
+        cdef object component_args
         cdef unsigned int system_id
+        cdef Entity entity_to_copy
         if debug:
             debug_str = 'KivEnt: Entity {entity_id} created with components: '
         for component in component_order:
             system = system_manager[component]
             system_id = system_manager.get_system_index(component)
-            component_id = system.create_component(
-                entity_id, zone, components_to_use[component])
+            component_args = components_to_use[component]
+            if isinstance(component_args, Entity):
+                entity_to_copy = component_args
+                component_id = entity_to_copy.get_component_index(component)
+                system.copy_component(entity_id, component_id)
+            else:
+                component_id = system.create_component(
+                    entity_id, zone, component_args)
             if debug:
                 debug_str += component + ': ' + str(component_id) + ', '
 
@@ -429,11 +446,16 @@ class GameWorld(Widget):
         cdef Entity entity = self.entities[entity_id]
         cdef EntityManager entity_manager = self.entity_manager
         cdef SystemManager system_manager = self.system_manager
+        cdef GameSystem system
         entity._load_order.reverse()
         load_order = entity._load_order
         for system_name in load_order:
-            system_manager[system_name].remove_component(
-                entity.get_component_index(system_name))
+            system = system_manager[system_name]
+            if entity_id not in system.copied_components:
+                system_manager[system_name].remove_component(
+                    entity.get_component_index(system_name))
+            else:
+                del system.copied_components[entity_id]
             if debug:
                 Logger.debug(('Remove component {comp_id} from entity'
                 ' {entity_id}').format(
@@ -474,11 +496,20 @@ class GameWorld(Widget):
             remove_entity(entity_id)
             er(entity_id)
 
-    def clear_entities(self):
+    def clear_entities(self, zones=[]):
         '''Used to clear every entity in the GameWorld.'''
         entities = self.entities
         er = self.remove_entity
-        entities_to_remove = [entity.entity_id for entity in memrange(self.entities)]
+        if zones == []:    
+            entities_to_remove = [
+                entity.entity_id for entity in memrange(self.entities)
+                ]
+        else:
+            entities_to_remove = []
+            rem_ex = entities_to_remove.extend
+            for zone in zones:
+                rem_ex([entity.entity_id for entity in memrange(
+                        self.entities, zone=zone)])
         for entity_id in entities_to_remove:
             er(entity_id)
 

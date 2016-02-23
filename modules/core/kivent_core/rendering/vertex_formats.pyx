@@ -151,8 +151,9 @@ vertex_format_4f = [
     (b'uvs', 2, b'float', uvs_offset, False),
     ]
 
-format_registrar.register_vertex_format('vertex_format_4f', vertex_format_4f,
-    sizeof(VertexFormat4F))
+format_registrar.register_vertex_format(
+    'vertex_format_4f', vertex_format_4f, sizeof(VertexFormat4F)
+    )
 
 cdef VertexFormat7F* tmp2 = <VertexFormat7F*>NULL
 pos_offset = <Py_ssize_t> (<Py_intptr_t>(tmp2.pos) - <Py_intptr_t>(tmp2))
@@ -167,19 +168,53 @@ vertex_format_7f = [
     (b'center', 2, b'float', center_offset, False),
     ]
 
-format_registrar.register_vertex_format('vertex_format_7f', vertex_format_7f,
-    sizeof(VertexFormat7F))
+format_registrar.register_vertex_format(
+    'vertex_format_7f', vertex_format_7f, sizeof(VertexFormat7F)
+    )
 
 cdef VertexFormat4F4UB* tmp3 = <VertexFormat4F4UB*>NULL
 pos_offset = <Py_ssize_t> (<Py_intptr_t>(tmp3.pos) - <Py_intptr_t>(tmp3))
 uvs_offset = <Py_ssize_t> (<Py_intptr_t>(tmp3.uvs) - <Py_intptr_t>(tmp3))
-color_offset = <Py_ssize_t> (<Py_intptr_t>(tmp3.vColor) - <Py_intptr_t>(tmp3))
+color_offset = <Py_ssize_t> (<Py_intptr_t>(tmp3.v_color) - <Py_intptr_t>(tmp3))
 
 vertex_format_4f4ub = [
     (b'pos', 2, b'float', pos_offset, False), 
     (b'uvs', 2, b'float', uvs_offset, False),
-    (b'vColor', 4, b'ubyte', color_offset, True),
+    (b'v_color', 4, b'ubyte', color_offset, True),
     ]
 
-format_registrar.register_vertex_format('vertex_format_4f4ub',
-    vertex_format_4f4ub, sizeof(VertexFormat4F4UB))
+format_registrar.register_vertex_format(
+    'vertex_format_4f4ub',vertex_format_4f4ub, sizeof(VertexFormat4F4UB)
+    )
+
+cdef VertexFormat2F4UB* tmp4 = <VertexFormat2F4UB*>NULL
+pos_offset = <Py_ssize_t> (<Py_intptr_t>(tmp4.pos) - <Py_intptr_t>(tmp4))
+color_offset = <Py_ssize_t> (<Py_intptr_t>(tmp4.v_color) - <Py_intptr_t>(tmp4))
+
+vertex_format_2f4ub = [
+    (b'pos', 2, b'float', pos_offset, False), 
+    (b'v_color', 4, b'ubyte', color_offset, True),
+    ]
+
+format_registrar.register_vertex_format(
+    'vertex_format_2f4ub', vertex_format_2f4ub, sizeof(VertexFormat2F4UB)
+    )
+
+cdef VertexFormat7F4UB* tmp5 = <VertexFormat7F4UB*>NULL
+pos_offset = <Py_ssize_t> (<Py_intptr_t>(tmp5.pos) - <Py_intptr_t>(tmp5))
+uvs_offset = <Py_ssize_t> (<Py_intptr_t>(tmp5.uvs) - <Py_intptr_t>(tmp5))
+rot_offset = <Py_ssize_t> (<Py_intptr_t>(&tmp5.rot) - <Py_intptr_t>(tmp5))
+center_offset = <Py_ssize_t> (<Py_intptr_t>(tmp5.center) - <Py_intptr_t>(tmp5))
+color_offset = <Py_ssize_t> (<Py_intptr_t>(tmp5.v_color) - <Py_intptr_t>(tmp5))
+
+vertex_format_7f4ub = [
+    (b'pos', 2, b'float', pos_offset, False), 
+    (b'uvs', 2, b'float', uvs_offset, False),
+    (b'rot', 1, b'float', rot_offset, False),
+    (b'center', 2, b'float', center_offset, False),
+    (b'v_color', 4, b'ubyte', color_offset, True),
+    ]
+
+format_registrar.register_vertex_format(
+    'vertex_format_7f4ub', vertex_format_7f4ub, sizeof(VertexFormat7F4UB)
+    )
