@@ -15,29 +15,8 @@ class TiledAnimator(GameSystem):
     def has_animations(self):
         return bool(self.durations)
 
-    def init(self):
-        self.set_update_time()
-        self.init_textures()
-
     def set_update_time(self):
-        self.update_time = float(reduce(gcd, self.durations))
-
-    def init_textures(self):
-        # Since tiled allows to animate a tile without use of the original tile's image
-        # e.g. tile uses gid 10, but it's animated with gids 20 and 30,
-        # we need to swap textures for gids 10 and 20 to make animation start with first frame's texture,
-        # not with the original texture.
-        # Maybe this should be taken into account when a tile is created?
-
-        system_id = self.system_id
-        entities = self.gameworld.entities
-        renderer_id = self.renderer_obj.system_id
-        for component in ifilter(None, self.components):
-            entity = entities[component.entity_id]
-            render_comp = getattr(entity, renderer_id)
-            animation_comp = getattr(entity, system_id)
-            if render_comp.texture_key != animation_comp.current_frame.image:
-                render_comp.texture_key = animation_comp.current_frame.image
+        self.update_time = float(reduce(gcd, self.durations)) / 1000
 
     def update(self, dt):
         system_id = self.system_id
