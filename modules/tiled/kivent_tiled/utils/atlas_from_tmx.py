@@ -6,7 +6,7 @@ from itertools import chain
 import click
 from PIL import Image
 from tmxloader.loader import TileMap
-from kivent_tiles.utils import name_from_tile, name_from_source
+from kivent_tiled.utils import name_from_tile, name_from_source
 
 os.environ['KIVY_DOC_INCLUDE'] = '1'
 from kivy.atlas import Atlas
