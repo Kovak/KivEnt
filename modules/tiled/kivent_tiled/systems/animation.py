@@ -6,17 +6,9 @@ from kivent_core.systems.gamesystem import GameSystem
 from kivy.properties import ListProperty, ObjectProperty, BooleanProperty
 
 
-class TiledAnimator(GameSystem):
-    durations = ListProperty()
+class AnimationSystem(GameSystem):
     dirty = BooleanProperty(False)
     renderer_obj = ObjectProperty(None)
-
-    @property
-    def has_animations(self):
-        return bool(self.durations)
-
-    def set_update_time(self):
-        self.update_time = float(reduce(gcd, self.durations)) / 1000
 
     def update(self, dt):
         system_id = self.system_id
@@ -41,4 +33,16 @@ class TiledAnimator(GameSystem):
             self.dirty = False
 
 
-Factory.register('TiledAnimator', cls=TiledAnimator)
+class TiledAnimationSystem(AnimationSystem):
+    durations = ListProperty()
+
+    @property
+    def has_animations(self):
+        return bool(self.durations)
+
+    def set_update_time(self):
+        self.update_time = float(reduce(gcd, self.durations)) / 1000
+
+
+Factory.register('AnimationSystem', cls=AnimationSystem)
+Factory.register('TiledAnimationSystem', cls=TiledAnimationSystem)
