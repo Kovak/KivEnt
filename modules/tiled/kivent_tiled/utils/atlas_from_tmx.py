@@ -1,26 +1,15 @@
 import os
 import shutil
 import tempfile
+import argparse
 from itertools import chain
 
-import click
 from PIL import Image
 from tmxloader.loader import TileMap
 from kivent_tiled.utils import name_from_tile, name_from_source
 
 os.environ['KIVY_DOC_INCLUDE'] = '1'
 from kivy.atlas import Atlas
-
-
-@click.command()
-@click.argument('map_source')
-@click.argument('outname')
-@click.argument('size', nargs=2, type=int)
-@click.argument('padding', default=2)
-@click.argument('use_path', default=False)
-def atlas_from_tileset(map_source, **kwargs):
-    atlas = AtlasWrapper(map_source)
-    atlas.create_atlas(**kwargs)
 
 
 class AtlasWrapper(object):
@@ -118,4 +107,15 @@ class SingleImageTilesetWrapper(ImageCollectionTilesetWrapper):
 
 
 if __name__ == '__main__':
-    atlas_from_tileset()
+    parser = argparse.ArgumentParser(description="Wrapper around kivy's atlas class.")
+    parser.add_argument('map_source')
+    parser.add_argument('outname')
+    parser.add_argument('size', type=int, nargs=2)
+    parser.add_argument('padding', default=2, type=int, nargs='?')
+    parser.add_argument('use_path', default=False, nargs='?')
+
+    args = parser.parse_args()
+    kwargs = vars(args)
+    source = kwargs.pop('map_source')
+    atlas = AtlasWrapper(source)
+    atlas.create_atlas(**kwargs)
