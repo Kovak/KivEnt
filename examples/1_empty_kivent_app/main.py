@@ -24,7 +24,7 @@ class TestGame(Widget):
 
 class YourAppNameApp(App):
     def build(self):
-        pass
+        return TestGame()
 
 if __name__ == '__main__':
     YourAppNameApp().run()
