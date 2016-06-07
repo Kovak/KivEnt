@@ -1,5 +1,6 @@
 from kivent_core.systems.staticmemgamesystem cimport StaticMemGameSystem, MemComponent
 from kivent_core.memory_handlers.zone cimport MemoryZone
+from kivent_core.gameworld import GameWorld
 from kivy.properties import (StringProperty, ObjectProperty, NumericProperty,
         BooleanProperty, ListProperty)
 from kivy.factory import Factory
@@ -25,22 +26,25 @@ cdef class MapComponent(MemComponent):
 
 cdef class MapSystem(StaticMemGameSystem):
 
-    system_id = StringProperty('map')
+    system_id = StringProperty('tile_map')
     processor = BooleanProperty(True)
     updataeble = BooleanProperty(False)
     type_size = NumericProperty(sizeof(MapStruct))
     component_type = ObjectProperty(MapComponent)
-    system_names = ListProperty(['map','renderer'])
+    system_names = ListProperty(['tile_map','renderer'])
+    gameworld = ObjectProperty(None)
 
-    def __init__(self):
+    def on_gameworld(self, instance, value):
+        print "Yay"
+
         model_manager = self.gameworld.managers["model_manager"]
         map_manager = MapManager(model_manager)
         self.gameworld.register_manager("map_manager", map_manager)
 
     def init_component(self, unsigned int component_index,
                        unsigned int entity_id, str zone, args):
-        model_manager = self.gameworld.model_manager
-        map_manager = self.gameworld.map_manager
+        model_manager = self.gameworld.managers["model_manager"]
+        map_manager = self.gameworld.managers["map_manager"]
 
         cdef MemoryZone memory_zone = self.imz_components.memory_zone
         cdef MapStruct* component = <MapStruct*>(

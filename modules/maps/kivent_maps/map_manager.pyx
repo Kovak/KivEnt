@@ -9,21 +9,25 @@ cdef class MapManager(GameManager):
     Manages memory allocation and assigment of maps
     '''
 
-    def __init__(self, ModelManager model_manager, allocation_size=1024*10):
+    def __init__(self, ModelManager model_manager, allocation_size=1024*500):
         self.model_manager = model_manager
         self.allocation_size = allocation_size
         self._maps = {}
 
-    def allocate(self, MemoryBlock master_buffer, gameworld):
-        cdef MemoryBlock memory_block = MemoryBlock(self.allocation_size, 1, 1)
-        memory_block.allocate_memory_with_buffer(master_buffer)
-        self.memory_block = memory_block
+    def allocate(self, master_buffer, gameworld):
+        cdef MemoryBlock maps_block = MemoryBlock(self.allocation_size*0.9, 1, 1)
+        maps_block.allocate_memory_with_buffer(master_buffer)
+        self.maps_block = maps_block
 
         return self.allocation_size
 
     def load_map(self, name, map_size, tile_size, tiles=None):
-        cdef TileMap tile_map = TileMap(map_size, tile_size, self.memory_block, self.model_manager, name)
+        cdef TileMap tile_map = TileMap(map_size, tile_size, self.maps_block, self.model_manager, name)
 
         if tiles:
             tile_map.tiles = tiles
         self._maps[name] = tile_map
+
+    property maps:
+        def __get__(self):
+            return self._maps

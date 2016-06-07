@@ -46,17 +46,16 @@ class TestGame(Widget):
                                               'blue-tile', 'blue-tile')
 
     def setup_tile_map(self):
-        map_manager = self.gameworld.map_manager
+        map_manager = self.gameworld.managers["map_manager"]
 
         tiles = []
         for i in range(100):
-            tiles[i] = []
+            tiles_i = []
             for j in range(100):
                 tile_name = choice(['orange-tile', 'purple-tile', 'green-tile', 'blue-tile'])
-                tiles[i][j] = {
-                        'texture': tile_name,
-                        'model': tile_name
-                        }
+                tiles_i_j = {'texture':tile_name,'model':tile_name}
+                tiles_i.append(tiles_i_j)
+            tiles.append(tiles_i)
 
         map_manager.load_map('my_map', (100, 100), 64, tiles)
 

@@ -4,7 +4,7 @@ from kivent_core.memory_handlers.block cimport MemoryBlock
 
 
 cdef class MapManager(GameManager):
-    cdef MemoryBlock memory_block
+    cdef MemoryBlock maps_block
     cdef ModelManager model_manager
     cdef unsigned int allocation_size
     cdef dict _maps
