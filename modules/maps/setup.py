@@ -25,15 +25,21 @@ do_clear_existing = True
 
 
 particles_modules = {
-    # 'kivent_particles.particle_renderers': ['kivent_particles/particle_renderers.pyx',],
+    'kivent_maps.map_data': ['kivent_maps/map_data.pyx',],
+    'kivent_maps.map_system': ['kivent_maps/map_system.pyx',],
+    'kivent_maps.map_manager': ['kivent_maps/map_manager.pyx',],
 }
 
 particles_modules_c = {
-    # 'kivent_particles.particle_renderers': ['kivent_particles/particle_renderers.c',],
+    'kivent_maps.map_data': ['kivent_maps/map_data.c',],
+    'kivent_maps.map_system': ['kivent_maps/map_system.c',],
+    'kivent_maps.map_manager': ['kivent_maps/map_manager.c',],
 }
 
 check_for_removal = [
-    # 'kivent_particles/particle_renderers.c',
+    'kivent_maps/map_data.c',
+    'kivent_maps/map_system.c',
+    'kivent_maps/map_manager.c',
 ]
 
 def build_ext(ext_name, files, include_dirs=[]):

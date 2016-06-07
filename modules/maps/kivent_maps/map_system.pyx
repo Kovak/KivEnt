@@ -4,6 +4,7 @@ from kivy.properties import (StringProperty, ObjectProperty, NumericProperty,
         BooleanProperty, ListProperty)
 from kivy.factory import Factory
 from kivent_maps.map_data cimport TileMap
+from kivent_maps.map_manager cimport MapManager
 
 
 cdef class MapComponent(MemComponent):
@@ -30,6 +31,11 @@ cdef class MapSystem(StaticMemGameSystem):
     type_size = NumericProperty(sizeof(MapStruct))
     component_type = ObjectProperty(MapComponent)
     system_names = ListProperty(['map','renderer'])
+
+    def __init__(self):
+        model_manager = self.gameworld.managers["model_manager"]
+        map_manager = MapManager(model_manager)
+        self.gameworld.register_manager("map_manager", map_manager)
 
     def init_component(self, unsigned int component_index,
                        unsigned int entity_id, str zone, args):
