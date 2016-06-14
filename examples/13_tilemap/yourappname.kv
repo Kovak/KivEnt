@@ -32,11 +32,10 @@ TestGame:
             pos: root.pos
             do_scroll_lock: False
             id: camera1
-        TileSystem:
-            system_id: 'tiles'
-            id: tiles
+        MapSystem:
+            system_id: 'tile_map'
+            id: tile_map
             gameworld: gameworld
-            camera_pos: camera1.camera_pos
-            camera_size: camera1.size
+            zones: ['general']
     GameScreenManager:
         id: gamescreenmanager
