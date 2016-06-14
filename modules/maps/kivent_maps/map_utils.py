@@ -8,8 +8,16 @@ def init_entities_from_map(tile_map, init_entity):
                 'position': (i * tile_size + tile_size/2, h - j * tile_size - tile_size/2),
                 'tile_map': {'name': tile_map.name, 'pos': (i,j)},
                 'renderer': {
-                    'texture': tile.texture,
-                    'model': tile.model
+                    'model': tile.model,
+                    'texture': tile.texture
                     }
                 }
-            init_entity(comp_data, ['position', 'tile_map', 'renderer'])
+            systems = ['position', 'tile_map', 'renderer']
+            if tile.animation:
+                comp_data['animation'] = {
+                    'name': tile.animation,
+                    'loop': True,
+                        }
+                systems.append('animation')
+
+            init_entity(comp_data, systems)

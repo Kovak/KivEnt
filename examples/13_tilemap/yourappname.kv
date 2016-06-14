@@ -9,8 +9,8 @@ TestGame:
         id: gameworld
         gamescreenmanager: gamescreenmanager
         size_of_gameworld: 100*1024
-        system_count: 3
-        zones: {'general': 10000}
+        system_count: 4
+        zones: {'general': 100000}
         PositionSystem2D:
             system_id: 'position'
             gameworld: gameworld
@@ -22,8 +22,18 @@ TestGame:
             zones: ['general']
             frame_count: 2
             gameview: 'camera1'
-            updateable: True
             shader_source: get_asset_path('positionshader.glsl', 'assets/glsl')
+        AnimationSystem:
+            id: animation
+            gameworld: gameworld
+            system_id: 'animation'
+            updateable: True
+            zones: ['general']
+        MapSystem:
+            system_id: 'tile_map'
+            id: tile_map
+            gameworld: gameworld
+            zones: ['general']
         GameView:
             system_id: 'camera1'
             gameworld: gameworld
@@ -32,10 +42,6 @@ TestGame:
             pos: root.pos
             do_scroll_lock: False
             id: camera1
-        MapSystem:
-            system_id: 'tile_map'
-            id: tile_map
-            gameworld: gameworld
-            zones: ['general']
+            updateable: True
     GameScreenManager:
         id: gamescreenmanager

@@ -38,7 +38,8 @@ cdef class MapSystem(StaticMemGameSystem):
         print "Yay"
 
         model_manager = self.gameworld.managers["model_manager"]
-        map_manager = MapManager(model_manager)
+        animation_manager = self.gameworld.managers["animation_manager"]
+        map_manager = MapManager(model_manager, animation_manager)
         self.gameworld.register_manager("map_manager", map_manager)
 
     def init_component(self, unsigned int component_index,

@@ -1,7 +1,7 @@
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.clock import Clock
-from random import choice
+from random import choice, randint
 import kivent_core
 from kivent_core.gameworld import GameWorld
 from kivent_core.managers.resource_managers import texture_manager
@@ -18,13 +18,14 @@ class TestGame(Widget):
     def __init__(self, **kwargs):
         super(TestGame, self).__init__(**kwargs)
         self.gameworld.init_gameworld(
-            ['renderer', 'position', 'camera1', 'tile_map'],
+            ['renderer', 'position', 'camera1', 'animation', 'tile_map'],
             callback=self.init_game)
 
     def init_game(self):
         self.setup_states()
         self.load_textures()
         self.load_models()
+        self.load_animations()
         self.set_state()
         self.setup_tile_map()
 
@@ -45,6 +46,27 @@ class TestGame(Widget):
         model_manager.load_textured_rectangle('vertex_format_4f', 64., 64.,
                                               'blue-tile', 'blue-tile')
 
+    def load_animations(self):
+        animation_manager = self.gameworld.animation_manager
+        frames = [{
+            'texture': 'orange-tile',
+            'model': 'orange-tile',
+            'duration': 500,
+            },{
+            'texture': 'purple-tile',
+            'model': 'purple-tile',
+            'duration': 500,
+            },{
+            'texture': 'green-tile',
+            'model': 'green-tile',
+            'duration': 500,
+            },{
+            'texture': 'blue-tile',
+            'model': 'blue-tile',
+            'duration': 500,
+            }]
+        animation_manager.load_animation('tile_animation', 4, frames)
+
     def setup_tile_map(self):
         map_manager = self.gameworld.managers["map_manager"]
 
@@ -52,8 +74,12 @@ class TestGame(Widget):
         for i in range(100):
             tiles_i = []
             for j in range(100):
-                tile_name = choice(['orange-tile', 'purple-tile', 'green-tile', 'blue-tile'])
-                tiles_i_j = {'texture':tile_name,'model':tile_name}
+                if randint(0,100) < 10:
+                    tiles_i_j = {'animation':'tile_animation'}
+                else:
+                    tile_name = choice(['orange-tile', 'purple-tile', 'green-tile', 'blue-tile'])
+                    tiles_i_j = {'texture':tile_name,
+                                 'model':tile_name}
                 tiles_i.append(tiles_i_j)
             tiles.append(tiles_i)
 
@@ -63,7 +89,7 @@ class TestGame(Widget):
 
     def setup_states(self):
         self.gameworld.add_state(state_name='main', systems_added=['renderer'],
-                                 systems_unpaused=['renderer'])
+                                 systems_unpaused=['renderer','animation'])
 
     def set_state(self):
         self.gameworld.state = 'main'
