@@ -639,10 +639,13 @@ cdef class TextureManager(GameManager):
     def get_texkey_in_group(self, tex_key, group_key):
         return tex_key in self._groups[group_key]
 
-    def load_atlas(self, source):
-        dirname = path.dirname(source)
-        with open(source, 'r') as data:
-             atlas_data = json.load(data)
+    def load_atlas(self, source, datatype='json', dirname=None):
+        if datatype == 'json':
+            dirname = path.dirname(source)
+            with open(source, 'r') as data:
+                 atlas_data = json.load(data)
+        elif datatype == 'dict':
+            atlas_data = source
         keys = self._keys
         uvs = self._uvs
         for imgname in atlas_data:
