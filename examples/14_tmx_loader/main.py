@@ -16,7 +16,7 @@ class TestGame(Widget):
     def __init__(self, **kwargs):
         super(TestGame, self).__init__(**kwargs)
         self.gameworld.init_gameworld(
-            ['renderer', 'position', 'camera1', 'tile_map'],
+            ['renderer', 'position', 'animation', 'camera1', 'tile_map'],
             callback=self.init_game)
 
     def init_game(self):
@@ -26,16 +26,15 @@ class TestGame(Widget):
 
     def setup_tile_map(self):
         filename = get_asset_path('map.tmx','assets')
-        model_manager = self.gameworld.managers['model_manager']
         map_manager = self.gameworld.managers['map_manager']
 
-        map_name = map_utils.parse_tmx(filename, texture_manager,
-                                       model_manager, map_manager)
+        map_name = map_utils.parse_tmx(filename, self.gameworld)
         map_utils.init_entities_from_map(map_manager.maps[map_name],
                                        self.gameworld.init_entity)
 
     def setup_states(self):
-        self.gameworld.add_state(state_name='main', systems_added=['renderer'])
+        self.gameworld.add_state(state_name='main', systems_added=['renderer', 'animation'],
+                systems_unpaused=['renderer','animation'])
 
     def set_state(self):
         self.gameworld.state = 'main'
