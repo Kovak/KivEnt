@@ -5,11 +5,10 @@ from kivy.properties import (StringProperty, ListProperty,
 from kivy.clock import Clock
 from kivy.vector import Vector
 from kivent_core.managers.system_manager cimport SystemManager
-from kivy.graphics.transformation cimport Matrix
+from kivy.graphics.transformation import Matrix
 from kivy.graphics import RenderContext
 from kivy.factory import Factory
 from kivy.input import MotionEvent
-from libc.math cimport sin, cos
 
 
 cdef class GameView(GameSystem):
@@ -30,11 +29,6 @@ cdef class GameView(GameSystem):
         compared to the physical size of the GameView, therefore 2x will show
         twice as much of your gameworld, appearing 'zoomed out', while .5 will
         show half as much of the gameworld, appearing 'zoomed in'.
-
-        **camera_rotate** (NumericProperty): Current angle in radians by which the
-        camera is rotated clockwise with respect to the world x-axis.
-        Every time this value is updated, the rotation takes place about the
-        center of the screen.
 
         **focus_entity** (BooleanProperty): If True the camera will follow the
         entity set in entity_to_focus
@@ -76,7 +70,6 @@ cdef class GameView(GameSystem):
     do_scroll_lock = BooleanProperty(True)
     camera_pos = ListProperty((0, 0))
     camera_scale = NumericProperty(1.0)
-    camera_rotate = NumericProperty(0)
     focus_entity = BooleanProperty(False)
     do_touch_zoom = BooleanProperty(False)
     do_scroll = BooleanProperty(True)
@@ -92,47 +85,12 @@ cdef class GameView(GameSystem):
     window_size = ListProperty((100., 100.))
     touch_pass_through = BooleanProperty(False)
 
-
     def __init__(self, **kwargs):
         super(GameView, self).__init__(**kwargs)
         self.matrix = Matrix()
         self._touch_count = 0
         self._touches = []
         self.canvas = RenderContext()
-
-    def _rotate_point(self, point, angle):
-        cos_r, sin_r = cos(angle), sin(angle)
-        return (cos_r * point[0] + sin_r * point[1],
-                -sin_r * point[0] + cos_r * point[1])
-
-    def convert_to_rotated_space(self, point, invert=False):
-        '''Convert a point from normal to rotated space and back using the invert parameter'''
-        camera_pos = self.camera_pos
-        camera_size = self.size
-        camera_scale = self.camera_scale
-        camera_rotate = self.camera_rotate
-
-        screen_center = (camera_size[0] * camera_scale * 0.5 - camera_pos[0],
-                         camera_size[1] * camera_scale * 0.5 - camera_pos[1])
-        screen_center_rotated = self._rotate_point(screen_center, -camera_rotate)
-
-        # Translate to screen center
-        tr_sc = Matrix().translate(screen_center[0], screen_center[1], 0)
-        # Rotate around screen center
-        rot_sc = Matrix().rotate(camera_rotate, 0, 0, 1)
-        # Translate back to origi Translate back to origin
-        tr_or = Matrix().translate(-screen_center_rotated[0],
-                                   -screen_center_rotated[1],
-                                   0)
-
-        m = tr_or.multiply(rot_sc.multiply(tr_sc))
-
-        if invert:
-            m = m.inverse()
-
-        p = (point[0] * m[0] + point[1] * m[4] + m[12],
-             point[0] * m[1] + point[1] * m[5] + m[13])
-        return p
 
     def get_camera_centered(self, map_size, camera_size, camera_scale):
         x = max((camera_size[0]*camera_scale - map_size[0])/2., 0.)
@@ -144,22 +102,16 @@ cdef class GameView(GameSystem):
         Used internally by gameview to update the projection matrix to properly
         reflect the settings for camera_size, camera_pos, and the pos and size
         of gameview.'''
-
-        # Camera left-bottom pos
-        px, py = self.camera_pos
-
+        camera_pos = self.camera_pos
+        camera_size = self.window_size
+        x, y = self.pos
         camera_scale = self.camera_scale
-        # Camera size
-        sx, sy = self.size[0] * camera_scale/2, self.size[1] * camera_scale/2
-
-        # Camera center
-        cx = -px + sx
-        cy = -py + sy
-
-        tm = Matrix().translate(-cx, -cy, 0) # Bring frame to origin
-        rm = Matrix().rotate(self.camera_rotate, 0, 0, 1) # Rotate around z
-        proj = rm.multiply(tm)
-        proj = Matrix().view_clip(-sx, sx, -sy, sy, 0., 100, 0).multiply(proj)
+        proj = self.matrix.view_clip(
+            -camera_pos[0],
+            camera_size[0]*camera_scale + -camera_pos[0],
+            -camera_pos[1],
+            camera_size[1]*camera_scale + -camera_pos[1],
+            0., 100, 0)
 
         self.canvas['projection_mat'] = proj
 
@@ -211,17 +163,10 @@ cdef class GameView(GameSystem):
             camera_size = self.size
             camera_scale = self.camera_scale
             size = camera_size[0] * camera_scale, camera_size[1] * camera_scale
-
-            screen_center = (size[0]*0.5, size[1]*0.5)
-            # screen_center = self._rotate_point(screen_center, -self.camera_rotate)
-
-            dist_x = -camera_pos[0] - position_data.x + screen_center[0]
-            dist_y = -camera_pos[1] - position_data.y + screen_center[1]
-
+            dist_x = -camera_pos[0] - position_data.x + size[0]*.5
+            dist_y = -camera_pos[1] - position_data.y + size[1]*.5
             if self.do_scroll_lock:
                dist_x, dist_y = self.lock_scroll(dist_x, dist_y)
-
-            # dist_x, dist_y = self.convert_to_rotated_space((dist_x, dist_y))
             self.camera_pos[0] += dist_x*camera_speed_multiplier*dt
             self.camera_pos[1] += dist_y*camera_speed_multiplier*dt
         self.update_render_state()
@@ -288,15 +233,14 @@ cdef class GameView(GameSystem):
     def convert_from_screen_to_world(self, pos):
         '''Converts the coordinates of pos from screen space to camera space'''
         #pos of touch
-        x,y = self.convert_to_rotated_space(pos, invert=True)
+        x,y = pos
         #pos of widget
         rx, ry = self.pos
         cx, cy = self.camera_pos
-        #rotated touch pos converted to widget space
-        wx, wy = x - rx - cx, y - ry - cy
-
+        #touch pos converted to widget space
+        wx, wy = x - rx, y - ry
         camera_scale = self.camera_scale
-        camera_x, camera_y = wx * camera_scale, wy * camera_scale
+        camera_x, camera_y = (wx * camera_scale) - cx, (wy * camera_scale) - cy
 
         return camera_x, camera_y
 
