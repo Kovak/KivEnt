@@ -361,7 +361,7 @@ def _load_tile_map(layers, width, tile_properties):
             tile_layer_count += 1
             tile_zindex.append(i)
         elif type(layer) == ObjectGroup:
-            color = get_color_from_hex(layer.color)
+            color = get_color_from_hex(str(layer.color))
             color = (color[0]*255, color[1]*255, color[2]*255, 255)
             for n, obj in enumerate(layer.objects):
                 if obj.gid:
