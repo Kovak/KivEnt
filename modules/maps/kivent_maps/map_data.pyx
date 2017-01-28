@@ -651,6 +651,86 @@ cdef class HexagonalTileMap(StaggeredTileMap):
 
         return (x, y)
 
+    def get_tile_index(self, pixel_x, pixel_y):
+        w, h = self.size_on_screen
+        tw, th = self.tile_size
+        sa = self._stagger_axis
+        si = self._stagger_index
+        ts = self.hex_side_length
+
+        if sa:
+            c = (tw - ts)/2.0
+            box_col = int(pixel_x/(ts + c))
+            is_box_col_odd = (box_col%2 == 1)
+
+            rel_box_x = pixel_x - box_col*(ts + c)
+
+            if (si and is_box_col_odd) or ((not si) and (not is_box_col_odd)):
+                box_row = int((h - pixel_y - th/2)/th)
+                rel_box_y = h - pixel_y - th/2 - box_row*th
+            else:
+                box_row = int((h - pixel_y)/th)
+                rel_box_y = h - pixel_y - box_row*th
+            '''
+            if si:
+                if is_box_col_odd:
+                    box_row = int((h - pixel_y - th/2)/th)
+                    rel_box_y = h - pixel_y - box_row*th - th/2
+                else:
+                    box_row = int((h - pixel_y)/th)
+                    rel_box_y = h - pixel_y - box_row*th
+            else:
+                if is_box_col_odd:
+                    box_row = int((h - pixel_y)/th)
+                    rel_box_y = h - pixel_y - box_row*th
+                else:
+                    box_row = int((h - pixel_y-th/2)/th)
+                    rel_box_y = h - pixel_y - box_row*th - th/2
+            '''
+            m = math.tan(math.pi/3)   # positive slope of the slanted line
+            row = box_row
+            col = box_col
+            if rel_box_y == 0 or rel_box_y == th:
+                print (row, col)
+                pass
+
+            elif rel_box_y > m*rel_box_x + c*m:
+                col = box_col - 1
+                if ((si and col%2 == 0) or ((not si) and col%2 == 1)):
+                    row = box_row + 1
+                else:
+                    row = box_row
+                '''
+                if si:
+                    if col%2 == 0:
+                        row = box_row + 1
+                    else:
+                        row = box_row
+                else:
+                    if col%2 == 0:
+                        row = box_row
+                    else:
+                        row = box_row + 1
+                '''
+            elif rel_box_y < -1*m*rel_box_x + c*m:
+                col = box_col - 1
+                if ((si and col%2 == 0) or ((not si) and col%2 == 1)):
+                    row = box_row
+                else:
+                    row = box_row - 1
+                '''
+                if si:
+                    if col%2 == 0:
+                        row = box_row
+                    else:
+                        row = box_row - 1
+                else:
+                    if col% 2 == 0:
+                        row = box_row - 1
+                    else:
+                        row = box_row
+                '''
+            return (col, row)
     property size_on_screen:
         def __get__(self):
             sx, sy = self.size_x, self.size_y
