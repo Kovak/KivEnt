@@ -398,6 +398,24 @@ cdef class TileMap:
 
         return (i * tw + tw/2, h - j * th - th/2)
 
+    def get_tile_index(self, pixel_x, pixel_y):
+        '''
+        Calculates the grid position(index) of the tile at a given pixel 
+        position
+
+        Args:
+            pixel_x: horizontal pixel position of tile from left edge
+
+            pixel_y: vertical pixel position of tile from its top edge
+
+        Return:
+            (unsigned i, unsigned j): col and row of the tile.
+        '''
+        w, h = self.size_on_screen
+        tw, th = self.tile_size
+
+        return (int(pixel_x/tw), int((h - pixel_y)/th))
+
     property tiles:
         def __get__(self):
             tile_list = []
