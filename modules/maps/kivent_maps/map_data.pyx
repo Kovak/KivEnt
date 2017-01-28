@@ -4,6 +4,7 @@ from kivent_core.rendering.animation cimport FrameList
 from kivent_core.managers.resource_managers import texture_manager
 from kivent_core.memory_handlers.block cimport MemoryBlock
 from kivent_maps.map_manager cimport MapManager
+import math
 
 
 cdef class LayerTile:
@@ -688,6 +689,24 @@ cdef class IsometricTileMap(TileMap):
         y = h - th/2 - y
 
         return (x, y)
+
+    def get_tile_index(self, pixel_x, pixel_y):
+        w, h = self.size_on_screen
+        tw, th = self.tile_size
+
+        m = float(th)/tw
+        cos = 1/math.sqrt(1 + m*m)
+        sin = math.sqrt(1 - cos*cos)
+        side = th/(2*sin)
+        pixel_y = h - pixel_y
+        pixel_x -= w/2
+
+        new_u = (pixel_x/(2*cos) + pixel_y/(2*sin))
+        new_v = (pixel_y/(2*sin) - pixel_x/(2*cos))
+        col = int(new_u/side)
+        row = int(new_v/side)
+
+        return (col, row)
 
     property size_on_screen:
         def __get__(self):
