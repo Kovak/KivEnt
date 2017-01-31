@@ -596,13 +596,12 @@ cdef class StaggeredTileMap(TileMap):
         sa = self._stagger_axis
         si = self._stagger_index
 
+        m = float(th)/tw
         col_shifted = int((pixel_x - tw/2)/tw)
         col_non_shifted = int(pixel_x/tw)
-
         row_shifted = int((h - pixel_y - th/2)/th)
         row_non_shifted = int((h - pixel_y)/th)
 
-        m = float(th)/float(tw)
         rel_x_g = abs(pixel_x - col_non_shifted*tw)
         rel_x_r = abs(pixel_x - col_shifted*tw - tw/2)
 
@@ -625,7 +624,7 @@ cdef class StaggeredTileMap(TileMap):
                 col = col_non_shifted
                 row = row_shifted*2+1 if si else row_non_shifted*2
 
-        if (rel_y_r > m*rel_x_r - th/2 and rel_y_r < (-1)*m*rel_x_r + 3*(th/2)
+        elif (rel_y_r > m*rel_x_r - th/2 and rel_y_r < (-1)*m*rel_x_r + 3*(th/2)
                 and rel_y_r < m*rel_x_r + th/2 and rel_y_r > (-1)*m*rel_x_r + th/2):
             if sa:
                 row = row_non_shifted if si else row_shifted
@@ -633,30 +632,7 @@ cdef class StaggeredTileMap(TileMap):
             else:
                 col = col_shifted
                 row = row_non_shifted*2 if si else row_shifted*2+1
-        '''
-        else:
-            m = float(th)/float(tw)
 
-            rel_x_g = abs(pixel_x - col_non_shifted*tw)
-            rel_x_r = abs(pixel_x - col_shifted*tw - tw/2)
-
-            if si:
-                rel_y_g = abs(h - pixel_y - row_shifted*th - 1.5*th)
-                rel_y_r = abs(h - pixel_y - row_non_shifted*th - th)
-            else:
-                rel_y_r = abs(h - pixel_y - row_shifted*th - 1.5*th)
-                rel_y_g = abs(h - pixel_y - row_non_shifted*th - th)
-
-            if (rel_y_g > m*rel_x_g - th/2 and rel_y_g < (-1)*m*rel_x_g + 3*(th/2)
-                    and rel_y_g < m*rel_x_g + th/2 and rel_y_g > (-1)*m*rel_x_g + th/2):
-                col = col_non_shifted
-                row = row_shifted*2+1 if si else row_non_shifted*2
-
-            if (rel_y_r > m*rel_x_r - th/2 and rel_y_r < (-1)*m*rel_x_r + 3*(th/2)
-                    and rel_y_r < m*rel_x_r + th/2 and rel_y_r > (-1)*m*rel_x_r + th/2):
-                col = col_shifted
-                row = row_non_shifted*2 if si else row_shifted*2+1
-        '''
         return (col,row)
 
     property size_on_screen:
@@ -728,96 +704,38 @@ cdef class HexagonalTileMap(StaggeredTileMap):
         ts = self.hex_side_length
 
         if sa:
-            c = (tw - ts)/2.0
-            box_col = int(pixel_x/(ts + c))
-            is_box_col_odd = (box_col%2 == 1)
+            c = (tw - ts)/2
+            m = float(th/2)/c
+            col_shifted = int((pixel_x - ts - c)/(tw + ts))
+            col_non_shifted = int(pixel_x/(tw + ts))
 
-            rel_box_x = pixel_x - box_col*(ts + c)
+            row_shifted = int((h - pixel_y - th/2)/th)
+            row_non_shifted = int((h - pixel_y)/th)
 
-            if (si and is_box_col_odd) or ((not si) and (not is_box_col_odd)):
-                box_row = int((h - pixel_y)/th)
-                rel_box_y = abs(h - pixel_y - box_row*th - th)
-            else:
-                box_row = int((h - pixel_y - th/2.0)/th)
-                rel_box_y = abs(h - pixel_y - box_row*th - th/2.0 - th)
-            '''
+            rel_x_g = abs(pixel_x - col_non_shifted*(tw+ts))
+            rel_x_r = abs(pixel_x - col_shifted*(tw + ts) - (ts + c))
+            col = col_shifted
+            row = row_shifted
+
             if si:
-                if is_box_col_odd:
-                    box_row = int((h - pixel_y)/th)
-                    rel_box_y = h - pixel_y - box_row*th
-                else:
-                    box_row = int((h - pixel_y - th/2)/th)
-                    rel_box_y = h - pixel_y - box_row*th - th/2
+                rel_y_g = abs(h - pixel_y - row_shifted*th - 1.5*th)
+                rel_y_r = abs(h - pixel_y - row_non_shifted*th - th)
             else:
-                if is_box_col_odd:
-                    box_row = int((h - pixel_y - th/2)/th)
-                    rel_box_y = h - pixel_y - box_row*th -th/2
-                else:
-                    box_row = int((h - pixel_y)/th)
-                    rel_box_y = h - pixel_y - box_row*th
-            '''
-            # m = math.tan(math.pi/3)   # positive slope of the slanted line
-            m = th/(2.0*c)
-            row = box_row
-            col = box_col
-            """
-            if rel_box_y == 0 or rel_box_y == th:
-                col = box_col - 1
-                if ((si and col%2 == 0 ) or ((not si) and col%2 == 1)):
-                    row = box_row - 1
-                else:
-                    row = box_row
-            
-                '''
-                if si:
-                    if col%2 == 0:
-                        row = box_row - 1
-                    else:
-                        row = box_row
-                else:
-                    if col%2 == 0:
-                        row = box_row
-                    else:
-                        row = box_row - 1
-                '''
-            """
-            if rel_box_y > m*rel_box_x + th/2.0:
-                col = box_col - 1
-                if ((si and col%2 == 0) or ((not si) and col%2 == 1)):
-                    row = box_row - 1
-                else:
-                    row = box_row
-                '''
-                if si:
-                    if col%2 == 0:
-                        row = box_row - 1
-                    else:
-                        row = box_row
-                else:
-                    if col%2 == 0:
-                        row = box_row
-                    else:
-                        row = box_row - 1
-                '''
-            elif rel_box_y < -1*m*rel_box_x + th/2.0:
-                col = box_col - 1
-                if ((si and col%2 == 0) or ((not si) and col%2 == 1)):
-                    row = box_row
-                else:
-                    row = box_row + 1
-                '''
-                if si:
-                    if col%2 == 0:
-                        row = box_row
-                    else:
-                        row = box_row + 1
-                else:
-                    if col% 2 == 0:
-                        row = box_row + 1
-                    else:
-                        row = box_row
-                '''
-            #return (col, row)
+                rel_y_r = abs(h - pixel_y - row_shifted*th - 1.5*th)
+                rel_y_g = abs(h - pixel_y - row_non_shifted*th - th)
+
+            if rel_y_g > m*rel_x_g - m*(ts+c) and rel_y_g < -1*m*rel_x_g + th + m*(ts+c) \
+                    and rel_y_g < th and rel_y_g > 0 and rel_y_g < m*rel_x_g + th/2 \
+                    and rel_y_g > -1*m*rel_x_g + th/2:
+                col = col_non_shifted*2
+                row = row_shifted if si else row_non_shifted
+
+            elif rel_y_r > m*rel_x_r - m*(ts+c) and rel_y_r < -1*m*rel_x_r + th + m*(ts + c) \
+                    and rel_y_r < th and rel_y_r > 0 and rel_y_r < m*rel_x_r + th/2 \
+                    and rel_y_r > -1*m*rel_x_r + th/2:
+                col = col_shifted*2 + 1
+                row = row_non_shifted if si else row_shifted
+        """
         else:
             row = int((h - pixel_y)/th)
             if si:
@@ -830,8 +748,9 @@ cdef class HexagonalTileMap(StaggeredTileMap):
                     col = int(pixel_x/tw)
                 else:
                     col = int(pixel_x - tw/2)/tw
+        """
         return (col, row)
-
+        
     property size_on_screen:
         def __get__(self):
             sx, sy = self.size_x, self.size_y
@@ -879,11 +798,13 @@ cdef class IsometricTileMap(TileMap):
         cos = 1/math.sqrt(1 + m*m)
         sin = math.sqrt(1 - cos*cos)
         side = th/(2*sin)
+
         pixel_y = h - pixel_y
         pixel_x -= w/2
 
         new_u = (pixel_x/(2*cos) + pixel_y/(2*sin))
         new_v = (pixel_y/(2*sin) - pixel_x/(2*cos))
+
         col = int(new_u/side)
         row = int(new_v/side)
 
