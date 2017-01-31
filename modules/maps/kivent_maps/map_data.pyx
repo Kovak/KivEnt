@@ -601,27 +601,39 @@ cdef class StaggeredTileMap(TileMap):
 
         row_shifted = int((h - pixel_y - th/2)/th)
         row_non_shifted = int((h - pixel_y)/th)
-        col_r=2
-        col_g=2
-        if sa:
-            center_x_g = abs(pixel_x - col_g*tw - tw/2)
-            center_x_r = abs(pixel_x - col_r*tw - tw)
 
-            if si:
-                center_y_g = abs(h - pixel_y - th - row_shifted*th)
-                center_y_r = abs(h - pixel_y - th/2 - row_non_shifted*th)
-            else:
-                center_y_r = abs(h - pixel_y - th - row_shifted*th)
-                center_y_g = abs(h - pixel_y - th/2 - row_non_shifted*th)
+        m = float(th)/float(tw)
+        rel_x_g = abs(pixel_x - col_non_shifted*tw)
+        rel_x_r = abs(pixel_x - col_shifted*tw - tw/2)
 
-            if (pow(center_x_g, 2) + pow(center_y_g, 2)) < (pow(center_x_r, 2) + pow(center_y_r, 2)):
-                col = col_g
+        col = col_shifted
+        row = row_shifted
+
+        if si:
+            rel_y_g = abs(h - pixel_y - row_shifted*th - 1.5*th)
+            rel_y_r = abs(h - pixel_y - row_non_shifted*th - th)
+        else:
+            rel_y_r = abs(h - pixel_y - row_shifted*th - 1.5*th)
+            rel_y_g = abs(h - pixel_y - row_non_shifted*th - th)
+
+        if (rel_y_g > m*rel_x_g - th/2 and rel_y_g < (-1)*m*rel_x_g + 3*(th/2)
+                and rel_y_g < m*rel_x_g + th/2 and rel_y_g > (-1)*m*rel_x_g + th/2):
+            if sa:
                 row = row_shifted if si else row_non_shifted
+                col = col_non_shifted*2
             else:
-                col = col_r
-                row = row_non_shifted if si else row_shifted
-            return (col, row)
+                col = col_non_shifted
+                row = row_shifted*2+1 if si else row_non_shifted*2
 
+        if (rel_y_r > m*rel_x_r - th/2 and rel_y_r < (-1)*m*rel_x_r + 3*(th/2)
+                and rel_y_r < m*rel_x_r + th/2 and rel_y_r > (-1)*m*rel_x_r + th/2):
+            if sa:
+                row = row_non_shifted if si else row_shifted
+                col = col_shifted*2+1
+            else:
+                col = col_shifted
+                row = row_non_shifted*2 if si else row_shifted*2+1
+        '''
         else:
             m = float(th)/float(tw)
 
@@ -629,22 +641,23 @@ cdef class StaggeredTileMap(TileMap):
             rel_x_r = abs(pixel_x - col_shifted*tw - tw/2)
 
             if si:
-                rel_y_g = abs(h - pixel_y - row_non_shifted*th)
-                rel_y_r = abs(h - pixel_y - row_shifted*th - th/2)
+                rel_y_g = abs(h - pixel_y - row_shifted*th - 1.5*th)
+                rel_y_r = abs(h - pixel_y - row_non_shifted*th - th)
             else:
-                rel_y_g = abs(h - pixel_y - row_shifted*th - th/2)
-                rel_y_r = abs(h - pixel_y - row_non_shifted*th)
+                rel_y_r = abs(h - pixel_y - row_shifted*th - 1.5*th)
+                rel_y_g = abs(h - pixel_y - row_non_shifted*th - th)
 
             if (rel_y_g > m*rel_x_g - th/2 and rel_y_g < (-1)*m*rel_x_g + 3*(th/2)
                     and rel_y_g < m*rel_x_g + th/2 and rel_y_g > (-1)*m*rel_x_g + th/2):
                 col = col_non_shifted
-                row = row_non_shifted*2 if si else row_shifted*2+1
+                row = row_shifted*2+1 if si else row_non_shifted*2
 
             if (rel_y_r > m*rel_x_r - th/2 and rel_y_r < (-1)*m*rel_x_r + 3*(th/2)
                     and rel_y_r < m*rel_x_r + th/2 and rel_y_r > (-1)*m*rel_x_r + th/2):
                 col = col_shifted
-                row = row_shifted*2+1 if si else row_non_shifted*2
-            return (col,row)
+                row = row_non_shifted*2 if si else row_shifted*2+1
+        '''
+        return (col,row)
 
     property size_on_screen:
         def __get__(self):
