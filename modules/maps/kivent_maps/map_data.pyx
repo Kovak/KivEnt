@@ -407,7 +407,7 @@ cdef class TileMap:
         Args:
             pixel_x: horizontal pixel position of tile from left edge
 
-            pixel_y: vertical pixel position of tile from its top edge
+            pixel_y: vertical pixel position of tile from its bottom edge
 
         Return:
             (unsigned i, unsigned j): col and row of the tile.
@@ -596,17 +596,19 @@ cdef class StaggeredTileMap(TileMap):
         sa = self._stagger_axis
         si = self._stagger_index
 
-        m = float(th)/tw
+        m = float(th)/tw         # positive slope of the tile sides
         col_shifted = int((pixel_x - tw/2)/tw)
         col_non_shifted = int(pixel_x/tw)
         row_shifted = int((h - pixel_y - th/2)/th)
         row_non_shifted = int((h - pixel_y)/th)
 
+        # Here g and r in the name signifies green and red
+        # as the two kinds of boxes for separation.
         rel_x_g = abs(pixel_x - col_non_shifted*tw)
         rel_x_r = abs(pixel_x - col_shifted*tw - tw/2)
 
-        col = col_shifted
-        row = row_shifted
+        col = 0         # set only in case pixel lies on the boundary
+        row = 0
 
         if si:
             rel_y_g = abs(h - pixel_y - row_shifted*th - 1.5*th)
@@ -615,6 +617,8 @@ cdef class StaggeredTileMap(TileMap):
             rel_y_r = abs(h - pixel_y - row_shifted*th - 1.5*th)
             rel_y_g = abs(h - pixel_y - row_non_shifted*th - th)
 
+        # checking whether the point (pixel_x, pixel_y) lies inside the
+        # tile by using the line equations of the four bounding lines.
         if (rel_y_g > m*rel_x_g - th/2 and rel_y_g < (-1)*m*rel_x_g + 3*(th/2)
                 and rel_y_g < m*rel_x_g + th/2 and rel_y_g > (-1)*m*rel_x_g + th/2):
             if sa:
@@ -703,6 +707,8 @@ cdef class HexagonalTileMap(StaggeredTileMap):
         si = self._stagger_index
         ts = self.hex_side_length
 
+        col = 0     # set only in case pixel lies on the boundary
+        row = 0
         if sa:
             c = (tw - ts)/2
             m = float(th/2)/c
@@ -714,8 +720,6 @@ cdef class HexagonalTileMap(StaggeredTileMap):
 
             rel_x_g = abs(pixel_x - col_non_shifted*(tw+ts))
             rel_x_r = abs(pixel_x - col_shifted*(tw + ts) - (ts + c))
-            col = col_shifted
-            row = row_shifted
 
             if si:
                 rel_y_g = abs(h - pixel_y - row_shifted*th - 1.5*th)
@@ -724,6 +728,8 @@ cdef class HexagonalTileMap(StaggeredTileMap):
                 rel_y_r = abs(h - pixel_y - row_shifted*th - 1.5*th)
                 rel_y_g = abs(h - pixel_y - row_non_shifted*th - th)
 
+            # check if the pixel (pixel_x, pixel_y) lies inside the tile by
+            # using the line equations of all bounding sides.
             if rel_y_g > m*rel_x_g - m*(ts+c) and rel_y_g < -1*m*rel_x_g + th + m*(ts+c) \
                     and rel_y_g < th and rel_y_g > 0 and rel_y_g < m*rel_x_g + th/2 \
                     and rel_y_g > -1*m*rel_x_g + th/2:
@@ -735,20 +741,35 @@ cdef class HexagonalTileMap(StaggeredTileMap):
                     and rel_y_r > -1*m*rel_x_r + th/2:
                 col = col_shifted*2 + 1
                 row = row_non_shifted if si else row_shifted
-        """
+
         else:
-            row = int((h - pixel_y)/th)
+            c = (th - ts)/2
+            m = float(c)/(tw/2)
+            col_shifted = int((pixel_x - tw/2)/tw)
+            col_non_shifted = int(pixel_x/tw)
+            row_non_shifted = int((h - pixel_y)/(th + ts))
+            row_shifted = int((h - pixel_y - (ts+c))/(th + ts))
+
+            rel_y_g = abs(h - pixel_y - row_non_shifted*(th + ts) - (th + ts))
+            rel_y_r = abs(h - pixel_y - row_shifted*(th + ts) - (ts + c) - (th + ts))
+
             if si:
-                if row%2 == 0:
-                    col = int(pixel_x - tw/2)/tw
-                else:
-                    col = int(pixel_x/tw)
+                rel_x_g = abs(pixel_x - tw/2 - col_shifted*tw)
+                rel_x_r = abs(pixel_x - col_non_shifted*tw)
             else:
-                if row%2 == 0:
-                    col = int(pixel_x/tw)
-                else:
-                    col = int(pixel_x - tw/2)/tw
-        """
+                rel_x_g = abs(pixel_x - col_non_shifted*tw)
+                rel_x_r = abs(pixel_x - tw/2 - col_shifted*tw)
+            
+            if rel_y_g > -1*m*rel_x_g + (ts + c) and rel_y_g > m*rel_x_g + (ts - c) \
+                    and rel_y_g < m*rel_x_g + (2*ts + c) and rel_y_g < -1*m*rel_x_g + (2*ts + 3*c):
+                col = col_shifted if si else col_non_shifted
+                row = row_non_shifted*2
+
+            elif rel_y_r > -1*m*rel_x_r + (ts + c) and rel_y_r > m*rel_x_r + (ts - c) \
+                    and rel_y_r < m*rel_x_r + (2*ts + c) and rel_y_r < -1*m*rel_x_r + (2*ts + 3*c):
+                col = col_non_shifted if si else col_shifted
+                row = row_shifted*2+1
+
         return (col, row)
         
     property size_on_screen:
@@ -802,6 +823,8 @@ cdef class IsometricTileMap(TileMap):
         pixel_y = h - pixel_y
         pixel_x -= w/2
 
+        # changed the co-ordinates from x-y to co-ordinates parallel to the
+        # sides of isometric tile with new_u and new_v as new co-ordinates.
         new_u = (pixel_x/(2*cos) + pixel_y/(2*sin))
         new_v = (pixel_y/(2*sin) - pixel_x/(2*cos))
 
