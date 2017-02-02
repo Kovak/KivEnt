@@ -607,9 +607,6 @@ cdef class StaggeredTileMap(TileMap):
         rel_x_g = abs(pixel_x - col_non_shifted*tw)
         rel_x_r = abs(pixel_x - col_shifted*tw - tw/2)
 
-        col = 0         # set only in case pixel lies on the boundary
-        row = 0
-
         if si:
             rel_y_g = abs(h - pixel_y - row_shifted*th - 1.5*th)
             rel_y_r = abs(h - pixel_y - row_non_shifted*th - th)
@@ -620,7 +617,8 @@ cdef class StaggeredTileMap(TileMap):
         # checking whether the point (pixel_x, pixel_y) lies inside the
         # tile by using the line equations of the four bounding lines.
         if (rel_y_g > m*rel_x_g - th/2 and rel_y_g < (-1)*m*rel_x_g + 3*(th/2)
-                and rel_y_g < m*rel_x_g + th/2 and rel_y_g > (-1)*m*rel_x_g + th/2):
+                and rel_y_g < m*rel_x_g + th/2
+                and rel_y_g > (-1)*m*rel_x_g + th/2):
             if sa:
                 row = row_shifted if si else row_non_shifted
                 col = col_non_shifted*2
@@ -628,8 +626,10 @@ cdef class StaggeredTileMap(TileMap):
                 col = col_non_shifted
                 row = row_shifted*2+1 if si else row_non_shifted*2
 
-        elif (rel_y_r > m*rel_x_r - th/2 and rel_y_r < (-1)*m*rel_x_r + 3*(th/2)
-                and rel_y_r < m*rel_x_r + th/2 and rel_y_r > (-1)*m*rel_x_r + th/2):
+        elif (rel_y_r > m*rel_x_r - th/2
+                and rel_y_r < (-1)*m*rel_x_r + 3*(th/2)
+                and rel_y_r < m*rel_x_r + th/2
+                and rel_y_r > (-1)*m*rel_x_r + th/2):
             if sa:
                 row = row_non_shifted if si else row_shifted
                 col = col_shifted*2+1
@@ -707,8 +707,6 @@ cdef class HexagonalTileMap(StaggeredTileMap):
         si = self._stagger_index
         ts = self.hex_side_length
 
-        col = 0     # set only in case pixel lies on the boundary
-        row = 0
         if sa:
             c = (tw - ts)/2
             m = float(th/2)/c
@@ -730,15 +728,15 @@ cdef class HexagonalTileMap(StaggeredTileMap):
 
             # check if the pixel (pixel_x, pixel_y) lies inside the tile by
             # using the line equations of all bounding sides.
-            if rel_y_g > m*rel_x_g - m*(ts+c) and rel_y_g < -1*m*rel_x_g + th + m*(ts+c) \
-                    and rel_y_g < th and rel_y_g > 0 and rel_y_g < m*rel_x_g + th/2 \
-                    and rel_y_g > -1*m*rel_x_g + th/2:
+            if (rel_y_g >= m*rel_x_g - m*(ts+c)
+                    and rel_y_g <= (-1)*m*rel_x_g + th + m*(ts+c)
+                    and rel_y_g <= th and rel_y_g >= 0
+                    and rel_y_g <= m*rel_x_g + th/2
+                    and rel_y_g >= (-1)*m*rel_x_g + th/2):
                 col = col_non_shifted*2
                 row = row_shifted if si else row_non_shifted
 
-            elif rel_y_r > m*rel_x_r - m*(ts+c) and rel_y_r < -1*m*rel_x_r + th + m*(ts + c) \
-                    and rel_y_r < th and rel_y_r > 0 and rel_y_r < m*rel_x_r + th/2 \
-                    and rel_y_r > -1*m*rel_x_r + th/2:
+            else:
                 col = col_shifted*2 + 1
                 row = row_non_shifted if si else row_shifted
 
@@ -751,7 +749,7 @@ cdef class HexagonalTileMap(StaggeredTileMap):
             row_shifted = int((h - pixel_y - (ts+c))/(th + ts))
 
             rel_y_g = abs(h - pixel_y - row_non_shifted*(th + ts) - (th + ts))
-            rel_y_r = abs(h - pixel_y - row_shifted*(th + ts) - (ts + c) - (th + ts))
+            rel_y_r = abs(h - pixel_y - (row_shifted + 1)*(th + ts) - (ts + c))
 
             if si:
                 rel_x_g = abs(pixel_x - tw/2 - col_shifted*tw)
@@ -759,14 +757,15 @@ cdef class HexagonalTileMap(StaggeredTileMap):
             else:
                 rel_x_g = abs(pixel_x - col_non_shifted*tw)
                 rel_x_r = abs(pixel_x - tw/2 - col_shifted*tw)
-            
-            if rel_y_g > -1*m*rel_x_g + (ts + c) and rel_y_g > m*rel_x_g + (ts - c) \
-                    and rel_y_g < m*rel_x_g + (2*ts + c) and rel_y_g < -1*m*rel_x_g + (2*ts + 3*c):
+
+            if (rel_y_g >= -1*m*rel_x_g + (ts + c)
+                    and rel_y_g >= m*rel_x_g + (ts - c)
+                    and rel_y_g <= m*rel_x_g + (2*ts + c)
+                    and rel_y_g <= -1*m*rel_x_g + (2*ts + 3*c)):
                 col = col_shifted if si else col_non_shifted
                 row = row_non_shifted*2
 
-            elif rel_y_r > -1*m*rel_x_r + (ts + c) and rel_y_r > m*rel_x_r + (ts - c) \
-                    and rel_y_r < m*rel_x_r + (2*ts + c) and rel_y_r < -1*m*rel_x_r + (2*ts + 3*c):
+            else:
                 col = col_non_shifted if si else col_shifted
                 row = row_shifted*2+1
 
