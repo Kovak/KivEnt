@@ -360,7 +360,7 @@ def _load_tile_map(layers, width, tile_properties):
             tile_zindex.append(i)
         elif type(layer) == ObjectGroup:
             c = layer.color
-            color = (c._Color__r, c._Color__g, c._Color__b, 255)
+            color = (c.red, c.green, c.blue, 255)
             for n, obj in enumerate(layer.objects):
                 if obj.gid:
                     tile_ids.add(obj.gid)
