@@ -5,6 +5,8 @@ from os.path import basename, dirname
 from kivent_core.systems.renderers import Renderer, ColorPolyRenderer
 from kivent_core.systems.animation import AnimationSystem
 
+from kivy.utils import get_color_from_hex
+
 from math import sin, cos, radians
 
 def load_map_systems(layer_count, gameworld, renderargs, animargs, polyargs):
@@ -359,11 +361,8 @@ def _load_tile_map(layers, width, tile_properties):
             tile_layer_count += 1
             tile_zindex.append(i)
         elif type(layer) == ObjectGroup:
-            if layer.color is not None:
-                c = layer.color
-                color = (c.red, c.green, c.blue, c.alpha)
-            else:
-                color = (0, 0, 0, 255)
+            color = get_color_from_hex(layer.color)
+            color = (color[0]*255, color[1]*255, color[2]*255, 255)
             for n, obj in enumerate(layer.objects):
                 if obj.gid:
                     tile_ids.add(obj.gid)
