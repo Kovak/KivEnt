@@ -359,8 +359,11 @@ def _load_tile_map(layers, width, tile_properties):
             tile_layer_count += 1
             tile_zindex.append(i)
         elif type(layer) == ObjectGroup:
-            c = layer.color
-            color = (c.red, c.green, c.blue, c.alpha)
+            if layer.color is not None:
+                c = layer.color
+                color = (c.red, c.green, c.blue, c.alpha)
+            else:
+                color = (0, 0, 0, 255)
             for n, obj in enumerate(layer.objects):
                 if obj.gid:
                     tile_ids.add(obj.gid)
