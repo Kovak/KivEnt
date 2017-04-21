@@ -1,8 +1,15 @@
 from os import environ, remove
 from os.path import dirname, join, isfile
-from distutils.core import setup
-from distutils.extension import Extension
 import kivy
+
+if environ.get('KIVENT_USE_SETUPTOOLS'):
+    from setuptools import setup, Extension
+    print('Using setuptools')
+else:
+    from distutils.core import setup
+    from distutils.extension import Extension
+    print('Using distutils')
+
 try:
     from Cython.Build import cythonize
     from Cython.Distutils import build_ext

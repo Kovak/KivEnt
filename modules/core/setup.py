@@ -1,10 +1,16 @@
 from os import environ, remove
 from platform import uname
 from os.path import join, isfile, exists
-from distutils.core import setup
-from distutils.extension import Extension
 import kivy
 from subprocess import check_output
+
+if environ.get('KIVENT_USE_SETUPTOOLS'):
+    from setuptools import setup, Extension
+    print('Using setuptools')
+else:
+    from distutils.core import setup
+    from distutils.extension import Extension
+    print('Using distutils')
 
 try:
     from Cython.Build import cythonize
@@ -183,7 +189,7 @@ else:
 
 setup(
     name='KivEnt Core',
-    version='2.2.0dev',
+    version='2.2.0.dev0',
     description='''A game engine for the Kivy Framework.
         https://github.com/Kovak/KivEnt for more info.''',
     author='Jacob Kovac',

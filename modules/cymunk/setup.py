@@ -1,10 +1,16 @@
 import pkgutil
-from distutils.core import setup
-from distutils.extension import Extension
 from os import environ, remove
 from platform import uname
 from os.path import join, isfile, exists, dirname
 from subprocess import check_output
+
+if environ.get('KIVENT_USE_SETUPTOOLS'):
+    from setuptools import setup, Extension
+    print('Using setuptools')
+else:
+    from distutils.core import setup
+    from distutils.extension import Extension
+    print('Using distutils')
 
 try:
     from Cython.Build import cythonize
@@ -100,6 +106,10 @@ check_for_removal = [
 
 loader = pkgutil.get_loader("cymunk")
 cymunk_dirname = loader.path if hasattr(loader, 'path') else loader.filename
+
+# pkgutil gives different results for py3
+if '__init__.py' in cymunk_dirname:
+    cymunk_dirname = dirname(cymunk_dirname)
 
 
 def build_ext(ext_name, files, include_dirs=[cymunk_dirname]):
