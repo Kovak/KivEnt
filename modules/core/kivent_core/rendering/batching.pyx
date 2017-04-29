@@ -508,7 +508,8 @@ cdef class BatchManager:
         cdef unsigned int tex_key = batch.tex_key
         self.batch_groups[tex_key].remove(batch)
         self.canvas.remove(batch.mesh_instruction)
-        batch.clear_frames()
+        #batch.clear_frames()
+        batch.current_frame = 0
         self.free_batches.append(batch_id)
         return 1
 

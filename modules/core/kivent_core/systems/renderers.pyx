@@ -1342,3 +1342,4 @@ Factory.register('ColorRenderer', cls=ColorRenderer)
 Factory.register('PolyRenderer', cls=PolyRenderer)
 Factory.register('ColorPolyRenderer', cls=ColorPolyRenderer)
 Factory.register('ScaledPolyRenderer', cls=ScaledPolyRenderer)
+
