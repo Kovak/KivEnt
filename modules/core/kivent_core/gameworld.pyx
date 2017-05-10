@@ -131,6 +131,7 @@ class GameWorld(Widget):
         super(GameWorld, self).__init__(**kwargs)
         self.states = {}
         self.state_callbacks = {}
+        self.before_update_callbacks = []
         self.managers = {}
         self.entity_manager = None
         self.entities = None
@@ -495,6 +496,9 @@ class GameWorld(Widget):
         entity.load_order = []
         entity_manager.remove_entity(entity_id)
 
+    def schedule_once(self, fn):
+        self.before_update_callbacks.append(fn)
+
     def update(self, dt):
         '''
         Args:
@@ -509,6 +513,11 @@ class GameWorld(Widget):
         cdef SystemManager system_manager = self.system_manager
         cdef list systems = system_manager.systems
         cdef GameSystem system
+
+        for f in self.before_update_callbacks:
+            f()
+        self.before_update_callbacks = []
+
         for system_index in system_manager._update_order:
             system = systems[system_index]
             if system.updateable and not system.paused:
