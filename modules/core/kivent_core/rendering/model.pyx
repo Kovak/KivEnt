@@ -588,6 +588,90 @@ cdef class VertexModel:
         vertex4.pos = [w, -h]
         vertex4.uvs = [u1, v0]
 
+    def flip_textured_rectangle_horizontally(self):
+        '''
+        Flip the texture of the quad horizontally
+        Will assume your using a textured quad model.
+        Will assume your vertex format have a 'pos' and 'uvs' array of size 2.
+
+        '''
+        vertex1 = self[0]
+        vertex2 = self[1]
+        vertex3 = self[2]
+        vertex4 = self[3]
+        u1, v1 = vertex1.uvs
+        u2, v2 = vertex2.uvs
+        u3, v3 = vertex3.uvs
+        u4, v4 = vertex4.uvs
+        uMin = min([u1, u2, u3, u4])
+        uMax = max([u1, u2, u3, u4])
+        vertex1.uvs = [uMin if u1 == uMax else uMax, v1]
+        vertex2.uvs = [uMin if u2 == uMax else uMax, v2]
+        vertex3.uvs = [uMin if u3 == uMax else uMax, v3]
+        vertex4.uvs = [uMin if u4 == uMax else uMax, v4]
+
+    def flip_textured_rectangle_vertically(self):
+        '''
+        Flip the texture of the quad vertically
+        Will assume your using a textured quad model.
+        Will assume your vertex format have a 'pos' and 'uvs' array of size 2.
+
+        '''
+        vertex1 = self[0]
+        vertex2 = self[1]
+        vertex3 = self[2]
+        vertex4 = self[3]
+        u1, v1 = vertex1.uvs
+        u2, v2 = vertex2.uvs
+        u3, v3 = vertex3.uvs
+        u4, v4 = vertex4.uvs
+        vMin = min([v1, v2, v3, v4])
+        vMax = max([v1, v2, v3, v4])
+        vertex1.uvs = [u1, vMin if v1 == vMax else vMax]
+        vertex2.uvs = [u2, vMin if v2 == vMax else vMax]
+        vertex3.uvs = [u3, vMin if v3 == vMax else vMax]
+        vertex4.uvs = [u4, vMin if v4 == vMax else vMax]
+
+    def rotate_textured_rectangle_clockwise(self):
+        '''
+        Rotate the texture of the quad 90 degress clockwise
+        Will assume your using a textured quad model.
+        Will assume your vertex format have a 'pos' and 'uvs' array of size 2.
+
+        '''
+        vertex1 = self[0]
+        vertex2 = self[1]
+        vertex3 = self[2]
+        vertex4 = self[3]
+        u1, v1 = vertex1.uvs
+        u2, v2 = vertex2.uvs
+        u3, v3 = vertex3.uvs
+        u4, v4 = vertex4.uvs
+        vertex1.uvs = [u2, v2]
+        vertex2.uvs = [u3, v3]
+        vertex3.uvs = [u4, v4]
+        vertex4.uvs = [u1, v1]
+
+    def rotate_textured_rectangle_counter_clockwise(self):
+        '''
+        Rotate the texture of the quad 90 degress counter clockwise
+        Will assume your using a textured quad model.
+        Will assume your vertex format have a 'pos' and 'uvs' array of size 2.
+
+        '''
+        vertex1 = self[0]
+        vertex2 = self[1]
+        vertex3 = self[2]
+        vertex4 = self[3]
+        u1, v1 = vertex1.uvs
+        u2, v2 = vertex2.uvs
+        u3, v3 = vertex3.uvs
+        u4, v4 = vertex4.uvs
+        vertex1.uvs = [u4, v4]
+        vertex2.uvs = [u1, v1]
+        vertex3.uvs = [u2, v2]
+        vertex4.uvs = [u3, v3]
+
     property vertices:
 
         def __get__(self):
