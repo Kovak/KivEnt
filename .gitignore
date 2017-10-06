@@ -3,6 +3,7 @@
 *.pyc
 .idea
 *.c
+*.cpp
 *.pyd
 *.swp
 *.egg-info

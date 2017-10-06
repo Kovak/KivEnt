@@ -1,0 +1,214 @@
+#:kivy 1.9.0
+#:import path os.path
+#:import dirname os.path.dirname
+#:import re re
+#:import main __main__
+
+ 
+TestGame:
+ 
+<TestGame>:
+    gameworld: gameworld
+    app: app
+	size: root.size
+    GameWorld:   
+    	z_index: 1
+        id: gameworld
+        gamescreenmanager: gamescreenmanager
+    	size_of_gameworld: 200*1024
+        size_of_entity_block: 128
+        zones: {'general': 2000}
+        PositionSystem2D:
+            system_id: 'local_position'
+            gameworld: gameworld
+            zones: ['general']
+		RotateSystem2D:
+            system_id: 'local_rotate'
+            gameworld: gameworld
+            zones: ['general']
+		LocalPositionRotateSystem2D:
+			system_id: 'attachment'
+            gameworld: root.gameworld
+            zones: ['general']
+        PositionSystem2D:
+            system_id: 'position'
+            gameworld: gameworld
+            zones: ['general']
+		RotateSystem2D:
+            system_id: 'rotate'
+            gameworld: gameworld
+            zones: ['general']
+        ColorSystem:
+            system_id: 'color'
+            gameworld: gameworld
+            zones: ['general']
+        RotateColorRenderer:
+            gameworld: gameworld
+            zones: ['general']
+            max_batches: 100
+            frame_count: 3
+            updateable: True
+            size_of_batches: 256
+			size_of_component_block: 128
+			shader_source: path.join(dirname(dirname(path.abspath(main.__file__))), 'assets', 'glsl', 'positioncolorrotateshader.glsl')
+			gameview: 'camera1'
+        GameView:
+            system_id: 'camera1'
+            gameworld: gameworld
+            size: root.size
+            window_size: root.size #root.size
+            pos: root.pos
+            do_scroll: True
+            do_scroll_lock: True
+    GameScreenManager:
+        id: gamescreenmanager
+        size: root.size
+        pos: root.pos
+        gameworld: gameworld
+ 
+<GameScreenManager>:
+    MainScreen:
+        id: main_screen
+        
+ 
+<MainScreen@GameScreen>:
+    name: 'main'
+    z_index: 1
+    AnchorLayout:
+    	size: root.size
+    	pos: root.pos
+		anchor_x: 'right'
+		
+		GridLayout:
+			cols: 1
+			rows: 2
+			pos: self.parent.pos
+			size_hint: (0.2, 1)
+			size_hint_min: (150, None)
+			size_hint_max: (300, None)
+			orientation: 'vertical'
+			canvas.before:
+				Color:
+					rgba: 0.0, 0.2, 0.2, 0.85
+				Rectangle:
+					pos: self.pos
+					size: self.size
+					
+			ScrollView:
+				pos: (0, 0)
+				canvas.before:
+					Color:
+						rgba: 0.0, 0.2, 0.0, 0.85
+					Rectangle:
+						pos: self.pos
+						size: self.size
+				TreeView:
+					size_hint: (None, None)
+					height: self.minimum_height
+					width: self.minimum_width
+					hide_root: True
+					id: tree_view
+					root_options: dict(text='Entities:')
+
+			BoxLayout:
+				orientation: 'vertical'		
+				Button:
+					text: "Add entity"
+					size_hint_min: (None, 20)
+					size_hint_max: (None, 50)
+					on_release: app.root.on_add_entity()
+				Button:
+					text: "Remove entity"
+					size_hint_min: (None, 20)
+					size_hint_max: (None, 50)
+					on_release: app.root.on_remove_entity()
+				Button:
+					text: "Remove subtree"
+					size_hint_min: (None, 20)
+					size_hint_max: (None, 50)
+					on_release: app.root.on_remove_entity_tree()
+				BoxLayout: # Spacer
+					size_hint: (None, 1)
+
+				SimpleSectionLabel:
+					text: 'Local position:'
+				BoxLayout:
+					canvas.before:
+						Color:
+							rgba: 1.0, 0.2, 0.0, 0.85
+						Rectangle:
+							pos: self.pos
+							size: self.size
+					orientation: 'horizontal'
+					size_hint: (1, None)
+					size: (0, 30)
+					# TODO. only allow integer
+					RegexInput:
+						id: txt_local_x
+						text: '0'
+						multiline: False 
+						input_type: 'number'
+						input_filter: 'int'
+					RegexInput:
+						id: txt_local_y
+						text: '0'
+						multiline: False
+						input_type: 'number'						
+				SimpleSectionLabel:
+					text: 'Local rotation:'
+				BoxLayout:
+					canvas.before:
+						Color:
+							rgba: 1.0, 0.2, 0.0, 0.85
+						Rectangle:
+							pos: self.pos
+							size: self.size
+					orientation: 'horizontal'
+					size_hint: (1, None)
+					size: (0, 50)
+					Slider:
+						id: rotation_slider
+						value: 360
+						range: (-360, 360)
+						step: 1
+					Label:
+						id: slider_label
+						text: "%i" % rotation_slider.value
+						multiline: False
+						size_hint: (None, 1)
+						size: (self.font_size * 3, self.texture_size[1])
+						valign: 'center'
+						canvas.before:
+							Color:
+								rgba: 1.0, 0.4, 0.0, 0.85
+							Rectangle:
+								pos: self.pos
+								size: self.size
+								
+				SimpleSectionLabel:
+					text: 'Select parent:'
+				Button:
+					id: parent_dropdown_select
+					text: "Select parent"
+					size_hint_min: (None, 20)
+					size_hint_max: (None, 50)
+				SimpleDropDown:
+					id: ent_dropdown
+					main_button: parent_dropdown_select
+					on_selected: app.root.on_select_parent()
+
+
+<RegexInput@TextInput>
+	_regex: re.compile('^\-?[0-9]*$')
+	input_filter: lambda s,undo: s if self._regex.match(self.text+s) else ""
+
+
+
+<SimpleSectionLabel@Label>
+	halign: 'left'
+	size_hint: (1, None)
+	size: self.texture_size
+	text_size: self.size
+	bold: True
+	padding_y: 5
+        

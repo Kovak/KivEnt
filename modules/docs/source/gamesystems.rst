@@ -106,6 +106,33 @@ Rendering Systems
 .. autoclass:: kivent_core.systems.renderers.ScaledPolyRenderer
     :members:
 
+Local coordinate system
+=======================
+
+You can use local coordinates by using the **LocalPositionSystem2D** or 
+**LocalPositionRotateSystem2D**.
+Both systems will implement a parent/children relationsship tree
+and will update the children position (and rotation in case of the
+**LocalPositionRotateSystem2D** system) according to their parents
+and its own local systems.
+All entities using this systems need to own the local and global components
+required.
+
+.. autoclass:: kivent_core.systems.attachment_system.RelationComponent
+    :members:
+
+.. autoclass:: kivent_core.systems.attachment_system.RelationTreeSystem
+    :show-inheritance:
+    :members: attach_child, detach_child, remove_component, create_component, init_component, remove_subtree, has_ancestor_by_id
+
+.. autoclass:: kivent_core.systems.attachment_system.LocalPositionSystem2D
+    :show-inheritance:
+    :members: attach_child, detach_child, remove_component, create_component, init_component, remove_subtree, has_ancestor_by_id
+
+.. autoclass:: kivent_core.systems.attachment_system.LocalPositionRotateSystem2D
+    :show-inheritance:
+    :members: attach_child, detach_child, remove_component, create_component, init_component, remove_subtree, has_ancestor_by_id
+
 Controlling the Viewing Area
 ============================
 

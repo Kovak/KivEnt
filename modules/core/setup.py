@@ -124,7 +124,7 @@ modules = {
     'systems': [
         'gamesystem', 'staticmemgamesystem', 'position_systems',
         'gameview', 'scale_systems', 'rotate_systems', 'color_systems',
-        'gamemap', 'renderers', 'lifespan', 'animation',
+        'gamemap', 'renderers', 'lifespan', 'animation', 'attachment_system'
     ],
 }
 
@@ -138,8 +138,9 @@ for name in modules:
     module_files = modules[name]
     for module_name in module_files:
         core_modules[prefix + module_name] = [file_prefix + module_name + '.pyx']
-        core_modules_c[prefix + module_name] = [file_prefix + module_name + '.c']
+        core_modules_c[prefix + module_name] = [file_prefix + module_name + '.c', file_prefix + module_name + '.cpp']
         check_for_removal.append(file_prefix + module_name + '.c')
+        check_for_removal.append(file_prefix + module_name + '.cpp')
 
 
 def build_ext(ext_name, files, include_dirs=[]):
