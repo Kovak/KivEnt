@@ -1,4 +1,4 @@
-from cymunk.cymunk cimport Body, cpBody, Space
+from cymunk.cymunk cimport Body, cpBody, Space, cpLayers
 from kivent_core.systems.staticmemgamesystem cimport (StaticMemGameSystem,
     MemComponent)
 
@@ -20,7 +20,16 @@ cdef class CymunkPhysics(StaticMemGameSystem):
     cdef list segment_query_result
     cdef int collision_type_count
     cdef dict collision_type_index
+    cdef readonly LayerHelper layers
 
     cdef unsigned int _init_component(self, unsigned int component_index,
         unsigned int entity_id, cpBody* body, str zone_name) except -1
     cdef int _clear_component(self, unsigned int component_index) except 0
+
+
+cdef class LayerHelper:
+    cdef list layers
+    cdef dict _layer_ids
+    cdef int _max_size
+    cdef readonly cpLayers ALL_LAYERS, NO_LAYERS
+    cpdef cpLayers calculate_layerset(self, object used_layer) except *

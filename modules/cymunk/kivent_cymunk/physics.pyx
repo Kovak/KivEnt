@@ -19,6 +19,7 @@ from kivent_core.memory_handlers.block cimport MemoryBlock
 from kivent_core.memory_handlers.zone cimport MemoryZone
 from kivent_core.memory_handlers.indexing cimport IndexedMemoryZone
 from kivent_core.managers.system_manager cimport SystemManager
+from collections import Iterable
 
 
 cdef class PhysicsComponent(MemComponent):
@@ -124,6 +125,12 @@ cdef class CymunkPhysics(StaticMemGameSystem):
         **damping** (NumericProperty): Damping for the Space. This is sort of
         like a global kind of friction. All velocities will be reduced to
         ``damping*initial_velocity`` every update tick.
+        
+        **cymunk_layers** (ListProperty): List of layer names to register.
+        
+        **layers** (LayerHelper): Helper to register/change layer names plus
+        helper functions to convert between the internal used bitset and 
+        the layer names.
 
     '''
     system_id = StringProperty('cymunk_physics')
@@ -138,6 +145,8 @@ cdef class CymunkPhysics(StaticMemGameSystem):
     processor = BooleanProperty(True)
     ignore_groups = ListProperty([])
     system_names = ListProperty(['cymunk_physics','position', 'rotate'])
+    cymunk_layers = ListProperty([])
+    
 
     property space:
         def __get__(self):
@@ -145,8 +154,8 @@ cdef class CymunkPhysics(StaticMemGameSystem):
 
 
     def __init__(self, **kwargs):
-
         super(CymunkPhysics, self).__init__(**kwargs)
+        self.layers = LayerHelper(self.cymunk_layers)
         self.bb_query_result = []
         self.segment_query_result = []
         self.init_physics()
@@ -209,6 +218,10 @@ cdef class CymunkPhysics(StaticMemGameSystem):
             begin_func, pre_solve_func,
             post_solve_func, separate_func
             )
+
+    def on_cymunk_layers(self, instance, value):
+        '''Event handler that updates the cymunk layer mapping.'''
+        self.layers.set_layers(value)
 
     def on_gravity(self, instance, value):
         '''Event handler that sets the gravity of **space**.'''
@@ -310,8 +323,6 @@ cdef class CymunkPhysics(StaticMemGameSystem):
         .. code-block:: python
 
             args = {
-                'entity_id': id,
-                'main_shape': string_shape_name,
                 'velocity': (x, y),
                 'vel_limit': float,
                 'position': (x, y),
@@ -332,8 +343,17 @@ cdef class CymunkPhysics(StaticMemGameSystem):
             col_shape_dict = {
                 'shape_type': string_shape_name,
                 'elasticity': float,
-                'collision_type': int,
-                'shape_info': shape_specific_dict
+                'shape_info': shape_specific_dict,
+                # Can be used to filter collision using custom collision_handlers.
+                'collision_type': int, 
+                # OPTIONAL. Fast collision filter.
+                # Shapes with the same group never collide.
+                'group': int,
+                # OPTIONAL. Fast collision filter.
+                # If set shapes will only collide if at least one layer is set in both shapes.
+                # Internal represented as bitset.
+                # Can be number (bitset) or iterable containing layer names from **cymunk_layers**.
+                'layers': int or iterable
                 }
 
         shape_info dicts looke like this, depending on their shape:
@@ -343,19 +363,23 @@ cdef class CymunkPhysics(StaticMemGameSystem):
             box = {
                 'width': float,
                 'height': float,
-                'mass': float
+                'mass': float,
+                # OPTIONAL
+                'offset': (float, float)
                 }
 
             circle = {
                 'inner_radius': float,
                 'outer_radius': float,
                 'mass': float,
+                # OPTIONAL
                 'offset': (float, float)
                 }
 
             poly = {
                 'mass': float,
                 'vertices': list,
+                # OPTIONAL
                 'offset': (float, float)}
 
             segment = {
@@ -377,6 +401,7 @@ cdef class CymunkPhysics(StaticMemGameSystem):
         cdef Space space
         cdef list shapes
         cdef Shape new_shape
+        cdef unsigned int layers
         space = self.space
         if 'moment' in args.keys():
             moment = args['moment']
@@ -426,25 +451,32 @@ cdef class CymunkPhysics(StaticMemGameSystem):
         shapes = []
         for shape in args['col_shapes']:
             shape_info = shape['shape_info']
+            offset = shape_info['offset'] if 'offset' in shape_info else (0,0)
             if shape['shape_type'] == 'circle':
                 new_shape = Circle(body, shape_info['outer_radius'],
-                    shape_info['offset'])
+                    offset)
             elif shape['shape_type'] == 'box':
                 new_shape = BoxShape(body, shape_info['width'],
-                    shape_info['height'])
+                     shape_info['height'], offset)
             elif shape['shape_type'] == 'poly':
                 new_shape = Poly(body, shape_info['vertices'],
-                    offset=shape_info['offset'])
+                    offset=offset)
             elif shape['shape_type'] == 'segment':
                 new_shape = Segment(body, shape_info['a'], shape_info['b'],
                     shape_info['radius'])
             else:
-                print 'shape not created'
+                raise ValueError("Invalid shape_type: '%s'" % shape['shape_type'])
             new_shape.friction = shape['friction']
             new_shape.elasticity = shape['elasticity']
             new_shape.collision_type = shape['collision_type']
             if 'group' in shape:
                 new_shape.group = shape['group']
+            if 'layers' in shape:
+                if isinstance(shape['layers'], Iterable):
+                    layers = self.layers.calculate_layerset(shape['layers'])
+                else:
+                    layers = int(shape['layers'])
+                new_shape.layers = layers
             shapes.append(new_shape)
             space.add(new_shape)
             space.reindex_shape(new_shape)
@@ -545,3 +577,171 @@ cdef class CymunkPhysics(StaticMemGameSystem):
 
 
 Factory.register('CymunkPhysics', cls=CymunkPhysics)
+
+
+class LayerException(Exception):
+    pass
+class LayerCountException(LayerException):
+    pass
+class LayerDuplicateException(LayerException):
+    pass
+class LayerNotFoundException(LayerException):
+    pass
+
+cdef class LayerHelper:
+    '''
+    The LayerHelper helps in using cymunks layers.
+    Layers in cymunk (chipmunk) can be used to filter collisions.
+    Collsisions will only occur if both shapes share at least one layer.
+    
+    Layers are represented as bitsets in cymunk.
+    This class provides a more pythonic way to map these bitsets.
+    
+    The amount of supported layers (size of the bitset) depends on your system
+    and/or how you compiled cymunk.
+    The default size is <unsigned int> which should be at least 32 bits large.
+    To change it compile cymunk AND this module with a define like:
+    -DCP_LAYERS_TYPE=uint32_t (64bit numbers need a cymunk patch atm)
+    
+    See the **max_layers** property for the currently available size.
+    
+    **Attributes:**
+        **layers** (tuple(str, str,...)): All registered layers in the order
+        of their corresponding bit.
+        
+        **layer_count** (int): The count of the currently registered layers.
+        
+        **max_layers** (int): The maximum supported number of layers on this system. 
+    '''
+    def __init__(self, layers=None):
+        self._max_size = sizeof(cpLayers) * 8
+        self.layers = list()
+        self._layer_ids = dict()
+        if layers:
+            for layer in layers:
+                self.add_layer(layer)
+        self.ALL_LAYERS = ~(<cpLayers>0)
+        self.NO_LAYERS = 0
+
+    property layers:
+        def __get__(self):
+            return tuple(self.layers)
+
+    property layer_count:
+        def __get__(self):
+            return len(self.layers)
+
+    property max_layers:
+        def __get__(self):
+            return self._max_size
+
+    def add_layer(self, str layer_name):
+        '''
+        Add a new layer with a given name.
+        
+        May raise **LayerDuplicateException** or **LayerCountException**.
+        '''
+        if layer_name in self._layer_ids:
+            raise LayerDuplicateException('Layer "%s" already present.' % layer_name)
+        new_id = len(self.layers)
+        if new_id >= self._max_size:
+            raise LayerCountException("Only up to %i layers supported." % self._max_size)        
+        self._layer_ids[layer_name] = new_id
+        self.layers.append(layer_name)
+
+    def clear(self):
+        '''Removes all layer mappings.'''
+        self.layers = []
+        self._layer_ids = {}
+
+    def set_layers(self, layers):
+        '''
+        Set the used layer names.
+        Removes the old layer names.
+        
+        **Args:**
+            **layers** (iterable): A list containing the new layer names
+            
+        May raise **LayerDuplicateException** or **LayerCountException**.
+        '''
+        self.clear()
+        for layer in layers:
+            self.add_layer(layer)
+
+    def rename_layer(self, str old_name, str new_name):
+        '''
+        Rename a layer.
+        
+        May raise **LayerNotFoundException** or **LayerDuplicateException**.
+        '''
+        if not old_name in self._layer_ids:
+            raise LayerNotFoundException('Layer "%s" not found..' % old_name)
+        if new_name in self._layer_ids:
+            raise LayerDuplicateException('Layer "%s" already present.' % new_name)
+        cdef unsigned int layer_id = self._layer_ids[old_name]
+        self._layer_ids[new_name] = layer_id
+        self.layers[layer_id] = new_name
+
+    cpdef cpLayers calculate_layerset(self, object used_layers) except *:
+        '''
+        Calculate the bitset for the given used layers.
+        
+        **Args:**
+            **used_layers** (iterable): An iterable containing the layers to use.
+        
+        May raise **LayerNotFoundException**.
+        '''
+        cdef cpLayers num = 0
+        cdef str layer
+        cdef dict layer_ids = self._layer_ids
+        for layer in used_layers:
+            if not layer in layer_ids:
+                raise LayerNotFoundException('Layer "%s" not found.' % layer)
+            num |= 1 << layer_ids[layer]
+        return num
+
+    def get_layers_from_layerset(self, cpLayers layerset, ignore_missing=True):
+        '''
+        Get the names of all set layers in the given bitset.
+        If **ignore_missing** is set ignores all bits for which no name is registered.
+        Otherwise raise a **LayerCountException**.
+        '''
+        cdef list ret = list()
+        cdef cpLayers remain = layerset;
+        for i, layer in enumerate(self.layers):
+            if (layerset & (1 << i)):
+                ret.append(layer)
+                remain -= 1 << i
+        if not ignore_missing and remain > 0:
+            raise LayerCountException()
+        return ret
+
+    def is_layer_set(self, str layer, cpLayers layerset):
+        '''
+        Returns if the given layer is set in the layerset.
+        May raise **LayerNotFoundException**.
+        '''
+        if not layer in self._layer_ids:
+            raise LayerNotFoundException('Layer "%s" not found.' % layer)
+        cdef unsigned int layer_id = self._layer_ids[layer] 
+        return bool(layerset & (1 << layer_id))
+
+    def set_layer(self, str layer, cpLayers layerset = 0):
+        '''
+        Sets the given layer in the layerset.
+        May raise **LayerNotFoundException**.
+        '''
+        if not layer in self._layer_ids:
+            raise LayerNotFoundException('Layer "%s" not found.' % layer)
+        cdef unsigned int layer_id = self._layer_ids[layer] 
+        return layerset | (1 << layer_id)
+
+    def unset_layer(self, str layer, cpLayers layerset):
+        '''
+        Removes the given layer from the given layerset.
+        May raise **LayerNotFoundException**.
+        '''
+        if not layer in self._layer_ids:
+            raise LayerNotFoundException('Layer "%s" not found.' % layer)
+        cdef unsigned int layer_id = self._layer_ids[layer] 
+        return layerset & (~(1 << layer_id))
