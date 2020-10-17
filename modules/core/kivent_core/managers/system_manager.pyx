@@ -1,4 +1,6 @@
 # cython: embedsignature=True
+from kivy.logger import Logger
+
 from kivent_core.managers.game_manager cimport GameManager
 '''
 GameWorld uses these system management classes to keep track of the GameSystems
@@ -160,7 +162,10 @@ cdef class SystemManager(GameManager):
     '''
 
     def __getitem__(self, str name):
-        return self.systems[self.get_system_index(name)]
+        try:
+            return self.systems[self.get_system_index(name)]
+        except IndexError:
+            raise KeyError(name)
 
     property update_order:
         def __get__(self):

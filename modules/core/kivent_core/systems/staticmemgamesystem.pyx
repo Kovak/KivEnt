@@ -601,8 +601,13 @@ cdef class ComponentPointerAggregator:
         for i, system_name in enumerate(self.system_names):
             pointer_loc = adjusted_index + i
             system_index = system_manager.get_system_index(system_name)
-            component_index = entity[system_index+1]
-            system = systems[system_index]
-            memory_zone = system.imz_components.memory_zone
-            data[pointer_loc] = memory_zone.get_pointer(component_index)
+            if system_index == <unsigned int>(-1):
+                raise KeyError(system_name)
+            try:
+                component_index = entity[system_index+1]
+                system = systems[system_index]
+                memory_zone = system.imz_components.memory_zone
+                data[pointer_loc] = memory_zone.get_pointer(component_index)
+            except IndexError, e:
+                raise KeyError("missing key=%s raised %s"%(system_name, e))
         return block_index
