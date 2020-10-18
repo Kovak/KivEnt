@@ -1,5 +1,5 @@
 # cython: embedsignature=True
-from kivent_core.systems.staticmemgamesystem cimport MemComponent
+from kivent_core.systems.staticmemgamesystem cimport MemComponent, GameSystem
 from kivent_core.memory_handlers.block cimport MemoryBlock
 from kivent_core.memory_handlers.indexing cimport IndexedMemoryZone
 
@@ -10,6 +10,9 @@ class SystemHasNoComponentsError(Exception):
     pass
 
 class NoComponentActiveError(Exception):
+    pass
+
+class DuplicateComponentError(Exception):
     pass
 
 cdef class Entity(MemComponent):
@@ -40,7 +43,7 @@ cdef class Entity(MemComponent):
         self.system_manager = None
 
     def __getattr__(self, str name):
-        system_manager = self.system_manager
+        cdef SystemManager system_manager = self.system_manager
         cdef unsigned int system_index = system_manager.get_system_index(name)
         if system_index == -1:
             raise NoSystemWithNameError(
@@ -50,7 +53,7 @@ cdef class Entity(MemComponent):
             raise SystemHasNoComponentsError(
                 'The {system_name} system has no components'
                 .format(system_name=name))
-        system = system_manager[name]
+        cdef GameSystem system = system_manager[name]
         cdef unsigned int* pointer = <unsigned int*>self.pointer
         cdef unsigned int component_index = pointer[system_index+1]
         if component_index == <unsigned int>-1:
@@ -66,13 +69,20 @@ cdef class Entity(MemComponent):
 
     property load_order:
         def __get__(self):
-            return self._load_order
+            cdef SystemManager system_manager = self.system_manager
+            cdef GameSystem system
+            cdef list ret = list()
+            cdef unsigned int comp_index
+            for system_index in self._load_order:
+                comp_index = self.get_component_index_c(system_index)
+                if comp_index == <unsigned int>-1:
+                    continue
+                system = system_manager.systems[system_index]
+                ret.append(system.system_id)
+            return ret
 
-        def __set__(self, list value):
-            self._load_order = value
-
-    cdef void set_component(self, unsigned int component_id,
-        unsigned int system_index):
+    cdef int set_component(self, unsigned int component_id,
+        unsigned int system_index) except 0:
         '''Sets the component_id for component of system with system_id index
         Args:
             component_id (unsigned int): Index of the component in the
@@ -81,7 +91,17 @@ cdef class Entity(MemComponent):
             system_index (unsigned int): System index of the GameSystem
         '''
         cdef unsigned int* pointer = <unsigned int*>self.pointer
+        if component_id != <unsigned int>-1: # a new component is registered
+            if pointer[system_index+1] != <unsigned int>-1:
+                system = self.system_manager.systems[system_index]
+                raise DuplicateComponentError(
+                    "Entity already has a component for system '%s'." % (
+                        system.system_id
+                        ))
+            if system_index not in self._load_order:
+                self._load_order.append(system_index)
         pointer[system_index+1] = component_id
+        return 1
 
     cpdef unsigned int get_component_index(self, str name):
         '''Gets the index of the component for GameSystem with system_id name.
@@ -94,5 +114,17 @@ cdef class Entity(MemComponent):
         '''
         cdef unsigned int system_index = self.system_manager.get_system_index(
             name)
+        cdef unsigned int* pointer = <unsigned int*>self.pointer
+        return pointer[system_index+1]
+    
+    cdef unsigned int get_component_index_c(self, unsigned int system_index):
+        '''Gets the index of the component for the GameSystem with system_index.
+        Args:
+            system_index (unsigned int): The system_index of the GameSystem to retrieve the
+            component for.
+        Return:
+            component_index (unsigned int): The index of the component
+            for the GameSystem with system_id name.
+        '''
         cdef unsigned int* pointer = <unsigned int*>self.pointer
         return pointer[system_index+1]

@@ -79,8 +79,8 @@ cdef class EntityManager(GameManager):
         '''
         return self.memory_index.get_size()
 
-    cdef void set_component(self, unsigned int entity_id,
-        unsigned int component_id, unsigned int system_id):
+    cdef int set_component(self, unsigned int entity_id,
+        unsigned int component_id, unsigned int system_id) except 0:
         '''
         Sets the component_id for the system at system_id in the
         entity data for Entity entity_id. Typically called by the GameSystem
@@ -98,11 +98,9 @@ cdef class EntityManager(GameManager):
             system_id (usngined int): index of the GameSystem.
 
         '''
-
-        cdef MemoryZone memory_zone = self.memory_index.memory_zone
-        cdef unsigned int* pointer = <unsigned int*>(
-            memory_zone.get_pointer(entity_id))
-        pointer[system_id+1] = component_id
+        cdef Entity entity = self.memory_index[entity_id]
+        entity.set_component(component_id, system_id)
+        return 1
 
     cdef void set_entity_active(self, unsigned int entity_id):
         '''

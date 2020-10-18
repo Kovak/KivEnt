@@ -417,8 +417,8 @@ class GameWorld(Widget):
         '''
         cdef unsigned int entity_id = self.get_entity(zone)
         cdef Entity entity = self.entities[entity_id]
-        entity.load_order = list(component_order)
         cdef SystemManager system_manager = self.system_manager
+        entity._load_order = list()
         entity.system_manager = system_manager
         cdef object component_args
         cdef unsigned int system_id
@@ -427,6 +427,9 @@ class GameWorld(Widget):
             debug_str = 'KivEnt: Entity {entity_id} created with components: '
         for component in component_order:
             system = system_manager[component]
+            # We need to add all entities to the load order,
+            # even if the systems have do_components set to False.
+            entity._load_order.append(system.system_index) 
             system_id = system_manager.get_system_index(component)
             component_args = components_to_use[component]
             if isinstance(component_args, Entity):
@@ -475,21 +478,24 @@ class GameWorld(Widget):
         cdef EntityManager entity_manager = self.entity_manager
         cdef SystemManager system_manager = self.system_manager
         cdef GameSystem system
+        cdef unsigned int comp_index
         entity._load_order.reverse()
-        load_order = entity._load_order
-        for system_name in load_order:
-            system = system_manager[system_name]
+        cdef list load_order = entity._load_order
+        for system_id in load_order:
+            system = system_manager.systems[system_id]
             if entity_id not in system.copied_components:
-                system_manager[system_name].remove_component(
-                    entity.get_component_index(system_name))
+                comp_index = entity.get_component_index_c(system_id)
+                if comp_index == <unsigned int>-1:
+                    continue
+                system.remove_component(comp_index)
             else:
                 del system.copied_components[entity_id]
             if debug:
                 Logger.debug(('Remove component {comp_id} from entity'
                 ' {entity_id}').format(
-                    comp_id=system_name,
+                    comp_id=system.system_id,
                     entity_id=str(entity_id)))
-        entity.load_order = []
+        entity._load_order = None
         entity_manager.remove_entity(entity_id)
 
     def update(self, dt):
