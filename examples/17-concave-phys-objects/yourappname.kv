@@ -1,0 +1,82 @@
+#:kivy 1.9.0
+#:import path os.path
+#:import dirname os.path.dirname
+#:import main __main__
+
+TestGame:
+
+<TestGame>:
+    gameworld: gameworld
+    app: app
+    GameWorld:
+        id: gameworld
+        gamescreenmanager: gamescreenmanager
+        size_of_gameworld: 100*1024
+        zones: {'general': 20000, 'touch': 100}
+        model_format_allocations: {'vertex_format_2f4ub': (150*1024, 150*1024),'vertex_format_4f': (150*1024, 150*1024) }
+        PositionSystem2D:
+            system_id: 'position'
+            gameworld: gameworld
+            zones: ['general', 'touch']
+
+        RotateSystem2D:
+            system_id: 'rotate'
+            gameworld: gameworld
+            zones: ['general']
+
+        PolyRenderer:
+            id: 'poly_renderer'
+            system_id: 'poly_renderer'
+            gameworld: gameworld
+            zones: ['general']
+            frame_count: 2
+            updateable: True
+            shader_source:  'poscolorshader.glsl'
+
+        CymunkPhysics:
+            gameworld: root.gameworld
+            zones: ['general']
+
+        CymunkTouchSystem:
+            gameworld: root.gameworld
+            zones: ['touch']
+            zone_to_use: 'touch'
+            physics_system: 'cymunk_physics'
+            touch_radius: 30
+
+    GameScreenManager:
+        id: gamescreenmanager
+        size: root.size
+        pos: root.pos
+        gameworld: gameworld
+
+<GameScreenManager>:
+    MainScreen:
+        id: main_screen
+
+<MainScreen@GameScreen>:
+    name: 'main'
+    FloatLayout:
+        Button:
+            text: 'Draw Some Stuff'
+            size_hint: (.2, .1)
+            pos_hint: {'x': .025, 'y': .025}
+            on_release: app.root.draw_some_stuff()
+        DebugPanel:
+            size_hint: (.2, .1)
+            pos_hint: {'x': .225, 'y': .025}
+        Label:
+            text: str(app.count)
+            size_hint: (.2, .1)
+            font_size: 24
+            pos_hint: {'x': .425, 'y': .025}
+
+<DebugPanel>:
+    Label:
+        pos: root.pos
+        size: root.size
+        font_size: root.size[1]*.5
+        halign: 'center'
+        valign: 'middle'
+        color: (1,1,1,1)
+        text: 'FPS: ' + root.fps if root.fps != None else 'FPS:'
